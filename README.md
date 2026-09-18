@@ -124,7 +124,7 @@ graph TB
     J --> Q
     K --> R
 ```
-
+![ebd87050-0240-4ce4-9f95-b0da08b0e9bf_1789744956568.jpg](./ebd87050-0240-4ce4-9f95-b0da08b0e9bf_1789744956568.jpg "ebd87050-0240-4ce4-9f95-b0da08b0e9bf_1789744956568.jpg")
 ---
 
 ## 🏗️ Architecture
