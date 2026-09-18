@@ -1,0 +1,15 @@
+# MLflow experiment directory (not supported by git folders)
+supply_chain_forecasting
+supply_chain_forecasting/
+
+# Python
+__pycache__/
+*.pyc
+
+# Databricks internal
+tmp/
+*.mleap
+
+# OS files
+.DS_Store
+Thumbs.db
