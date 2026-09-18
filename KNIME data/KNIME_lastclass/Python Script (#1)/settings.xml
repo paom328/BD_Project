@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://www.knime.org/2008/09/XMLConfig" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.knime.org/2008/09/XMLConfig http://www.knime.org/XMLConfig_2008_09.xsd" key="settings.xml">
+    <entry key="node_file" type="xstring" value="settings.xml"/>
+    <config key="flow_stack"/>
+    <config key="internal_node_subsettings">
+        <entry key="memory_policy" type="xstring" value="CacheSmallInMemory"/>
+    </config>
+    <config key="model">
+        <entry key="python3_command" type="xstring" value=""/>
+        <entry key="script" type="xstring" value="import knime.scripting.io as knio%%00013%%00010import pandas as pd%%00013%%00010import numpy as np%%00013%%00010%%00013%%00010np.random.seed(42)%%00013%%00010n_samples = 500%%00013%%00010%%00013%%00010# ==============================================================================%%00013%%00010# DATASET 1: Employee Attrition &amp; Disloyalty (Classification Task)%%00013%%00010# ==============================================================================%%00013%%00010departments = ['IT', 'Analytics', 'Operations', 'Finance', 'HR']%%00013%%00010%%00013%%00010data_attrition = pd.DataFrame({%%00013%%00010    'emp_id': [f'EMP_{i:04d}' for i in range(1, n_samples + 1)],%%00013%%00010    'department': np.random.choice(departments, size=n_samples, p=[0.3, 0.2, 0.25, 0.15, 0.1]),%%00013%%00010    'tenure_years': np.round(np.random.uniform(0.5, 12.0, n_samples), 1),%%00013%%00010    'satisfaction_score': np.random.randint(1, 6, n_samples),%%00013%%00010    'last_raise_pct': np.round(np.random.uniform(0.0, 15.0, n_samples), 1),%%00013%%00010    'overtime_hours_month': np.random.randint(0, 40, n_samples),%%00013%%00010    'remote_days_week': np.random.randint(0, 6, n_samples),%%00013%%00010    'is_disloyal': np.random.choice([0, 1], size=n_samples, p=[0.75, 0.25])%%00013%%00010})%%00013%%00010%%00013%%00010# ==============================================================================%%00013%%00010# DATASET 2: Text Extraction &amp; Categorization (Text Mining Task)%%00013%%00010# ==============================================================================%%00013%%00010text_samples = [%%00013%%00010    (&quot;Needs better salary and incentives for overtime hours&quot;, &quot;Compensation&quot;, &quot;Request&quot;),%%00013%%00010    (&quot;Great culture, but remote work policy is far too strict&quot;, &quot;Work Conditions&quot;, &quot;Complaint&quot;),%%00013%%00010    (&quot;My manager is supportive and provides clear growth opportunities&quot;, &quot;Leadership&quot;, &quot;Feedback&quot;),%%00013%%00010    (&quot;Requesting modern laptops and cloud computing tools for data processing&quot;, &quot;IT Support&quot;, &quot;Request&quot;),%%00013%%00010    (&quot;High stress levels due to excessive workload and tight project deadlines&quot;, &quot;Work Conditions&quot;, &quot;Complaint&quot;),%%00013%%00010    (&quot;Very satisfied with career development and internal training programs&quot;, &quot;Career Growth&quot;, &quot;Feedback&quot;),%%00013%%00010    (&quot;Urgent request to adjust compensation according to market rates&quot;, &quot;Compensation&quot;, &quot;Request&quot;),%%00013%%00010    (&quot;Lack of transparent communication regarding company restructuring&quot;, &quot;Leadership&quot;, &quot;Complaint&quot;)%%00013%%00010]%%00013%%00010%%00013%%00010choices = np.random.choice(len(text_samples), size=n_samples)%%00013%%00010%%00013%%00010data_text = pd.DataFrame({%%00013%%00010    'response_id': [f'RESP_{i:04d}' for i in range(1, n_samples + 1)],%%00013%%00010    'survey_feedback': [text_samples[i][0] for i in choices],%%00013%%00010    'extracted_category': [text_samples[i][1] for i in choices],%%00013%%00010    'extracted_objective': [text_samples[i][2] for i in choices]%%00013%%00010})%%00013%%00010%%00013%%00010# Assign to KNIME output ports%%00013%%00010knio.output_tables[0] = knio.Table.from_pandas(data_attrition)%%00013%%00010knio.output_tables[1] = knio.Table.from_pandas(data_text)"/>
+    </config>
+    <config key="variables">
+        <entry key="version" type="xstring" value="V_2019_09_13"/>
+        <config key="tree">
+            <config key="python3_command">
+                <entry key="used_variable" type="xstring" value=""/>
+                <entry key="used_variable_flawed" type="xboolean" value="false"/>
+                <entry key="exposed_variable" type="xstring" isnull="true" value=""/>
+            </config>
+        </config>
+    </config>
+    <entry key="customDescription" type="xstring" isnull="true" value=""/>
+    <entry key="state" type="xstring" value="EXECUTED"/>
+    <entry key="factory" type="xstring" value="org.knime.python3.scripting.nodes2.script.PythonScriptNodeFactory"/>
+    <entry key="node-name" type="xstring" value="Python Script"/>
+    <entry key="node-bundle-name" type="xstring" value="KNIME Python 3 - Scripting Nodes"/>
+    <entry key="node-bundle-symbolic-name" type="xstring" value="org.knime.python3.scripting.nodes"/>
+    <entry key="node-bundle-vendor" type="xstring" value="KNIME AG, Zurich, Switzerland"/>
+    <entry key="node-bundle-version" type="xstring" value="5.12.0.v202606171811"/>
+    <entry key="node-feature-name" type="xstring" value="KNIME Python Integration"/>
+    <entry key="node-feature-symbolic-name" type="xstring" value="org.knime.features.python3.scripting.feature.group"/>
+    <entry key="node-feature-vendor" type="xstring" value="KNIME AG, Zurich, Switzerland"/>
+    <entry key="node-feature-version" type="xstring" value="5.12.0.v202606171811"/>
+    <config key="factory_settings"/>
+    <config key="node_creation_config">
+        <config key="Python environment"/>
+        <config key="Input object (pickled)"/>
+        <config key="Input table"/>
+        <config key="Output table">
+            <config key="port_0">
+                <entry key="object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            </config>
+            <config key="port_1">
+                <entry key="object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            </config>
+        </config>
+        <config key="Output image"/>
+        <config key="Output object (pickled)"/>
+    </config>
+    <entry key="name" type="xstring" value="Python Script"/>
+    <entry key="hasContent" type="xboolean" value="true"/>
+    <entry key="isInactive" type="xboolean" value="false"/>
+    <config key="ports">
+        <config key="port_1">
+            <entry key="index" type="xint" value="1"/>
+            <entry key="port_spec_class" type="xstring" value="org.knime.core.data.DataTableSpec"/>
+            <entry key="port_object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            <entry key="port_object_summary" type="xstring" value="Rows: 500, Cols: 8"/>
+            <entry key="port_dir_location" type="xstring" value="port_1"/>
+        </config>
+        <config key="port_2">
+            <entry key="index" type="xint" value="2"/>
+            <entry key="port_spec_class" type="xstring" value="org.knime.core.data.DataTableSpec"/>
+            <entry key="port_object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            <entry key="port_object_summary" type="xstring" value="Rows: 500, Cols: 4"/>
+            <entry key="port_dir_location" type="xstring" value="port_2"/>
+        </config>
+    </config>
+    <config key="filestores">
+        <entry key="file_store_location" type="xstring" isnull="true" value=""/>
+        <entry key="file_store_id" type="xstring" value="0be6c3bd-0698-4916-91d6-8755912479c7"/>
+    </config>
+</config>

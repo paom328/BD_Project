@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://www.knime.org/2008/09/XMLConfig" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.knime.org/2008/09/XMLConfig http://www.knime.org/XMLConfig_2008_09.xsd" key="settings.xml">
+    <entry key="node_file" type="xstring" value="settings.xml"/>
+    <config key="flow_stack"/>
+    <config key="internal_node_subsettings">
+        <entry key="memory_policy" type="xstring" value="CacheSmallInMemory"/>
+    </config>
+    <config key="model"/>
+    <config key="view">
+        <config key="displayedColumnsV2">
+            <entry key="mode" type="xstring" value="MANUAL"/>
+            <config key="patternFilter">
+                <entry key="pattern" type="xstring" value=""/>
+                <entry key="isCaseSensitive" type="xboolean" value="false"/>
+                <entry key="isInverted" type="xboolean" value="false"/>
+            </config>
+            <config key="manualFilter">
+                <config key="manuallySelected">
+                    <entry key="array-size" type="xint" value="58"/>
+                    <entry key="0" type="xstring" value="response_id"/>
+                    <entry key="1" type="xstring" value="survey_feedback"/>
+                    <entry key="2" type="xstring" value="extracted_category"/>
+                    <entry key="3" type="xstring" value="extracted_objective"/>
+                    <entry key="4" type="xstring" value="feedback_clean"/>
+                    <entry key="5" type="xstring" value="prediction"/>
+                    <entry key="6" type="xstring" value="according"/>
+                    <entry key="7" type="xstring" value="adjust"/>
+                    <entry key="8" type="xstring" value="better"/>
+                    <entry key="9" type="xstring" value="career"/>
+                    <entry key="10" type="xstring" value="clear"/>
+                    <entry key="11" type="xstring" value="cloud"/>
+                    <entry key="12" type="xstring" value="communication"/>
+                    <entry key="13" type="xstring" value="company"/>
+                    <entry key="14" type="xstring" value="compensation"/>
+                    <entry key="15" type="xstring" value="computing"/>
+                    <entry key="16" type="xstring" value="culture"/>
+                    <entry key="17" type="xstring" value="deadlines"/>
+                    <entry key="18" type="xstring" value="development"/>
+                    <entry key="19" type="xstring" value="excessive"/>
+                    <entry key="20" type="xstring" value="far"/>
+                    <entry key="21" type="xstring" value="great"/>
+                    <entry key="22" type="xstring" value="growth"/>
+                    <entry key="23" type="xstring" value="high"/>
+                    <entry key="24" type="xstring" value="hours"/>
+                    <entry key="25" type="xstring" value="incentives"/>
+                    <entry key="26" type="xstring" value="internal"/>
+                    <entry key="27" type="xstring" value="lack"/>
+                    <entry key="28" type="xstring" value="laptops"/>
+                    <entry key="29" type="xstring" value="levels"/>
+                    <entry key="30" type="xstring" value="manager"/>
+                    <entry key="31" type="xstring" value="market"/>
+                    <entry key="32" type="xstring" value="modern"/>
+                    <entry key="33" type="xstring" value="needs"/>
+                    <entry key="34" type="xstring" value="opportunities"/>
+                    <entry key="35" type="xstring" value="overtime"/>
+                    <entry key="36" type="xstring" value="policy"/>
+                    <entry key="37" type="xstring" value="programs"/>
+                    <entry key="38" type="xstring" value="project"/>
+                    <entry key="39" type="xstring" value="provides"/>
+                    <entry key="40" type="xstring" value="rates"/>
+                    <entry key="41" type="xstring" value="regarding"/>
+                    <entry key="42" type="xstring" value="remote"/>
+                    <entry key="43" type="xstring" value="request"/>
+                    <entry key="44" type="xstring" value="restructuring"/>
+                    <entry key="45" type="xstring" value="salary"/>
+                    <entry key="46" type="xstring" value="satisfied"/>
+                    <entry key="47" type="xstring" value="stress"/>
+                    <entry key="48" type="xstring" value="strict"/>
+                    <entry key="49" type="xstring" value="supportive"/>
+                    <entry key="50" type="xstring" value="tight"/>
+                    <entry key="51" type="xstring" value="training"/>
+                    <entry key="52" type="xstring" value="transparent"/>
+                    <entry key="53" type="xstring" value="urgent"/>
+                    <entry key="54" type="xstring" value="work"/>
+                    <entry key="55" type="xstring" value="workload"/>
+                    <entry key="56" type="xstring" value="mistral_category"/>
+                    <entry key="57" type="xstring" value="mistral_concern"/>
+                </config>
+                <config key="manuallyDeselected">
+                    <entry key="array-size" type="xint" value="0"/>
+                </config>
+                <entry key="includeUnknownColumns" type="xboolean" value="false"/>
+            </config>
+            <config key="typeFilter">
+                <config key="selectedTypes">
+                    <entry key="array-size" type="xint" value="0"/>
+                </config>
+            </config>
+        </config>
+        <entry key="showRowIndices" type="xboolean" value="false"/>
+        <entry key="showRowKeys" type="xboolean" value="true"/>
+        <entry key="title" type="xstring" value="Table View"/>
+        <entry key="showTableSize" type="xboolean" value="true"/>
+        <entry key="showColumnDataType" type="xboolean" value="true"/>
+        <entry key="enablePagination" type="xboolean" value="false"/>
+        <entry key="pageSize" type="xint" value="10"/>
+        <entry key="autoSizeColumnsToContent" type="xstring" value="FIXED"/>
+        <entry key="rowHeightModeV2" type="xstring" value="AUTO"/>
+        <entry key="customRowHeight" type="xint" value="80"/>
+        <entry key="maxAutoRowHeight" type="xint" value="120"/>
+        <entry key="verticalPaddingMode" type="xstring" value="DEFAULT"/>
+        <entry key="enableGlobalSearch" type="xboolean" value="true"/>
+        <entry key="enableColumnSearch" type="xboolean" value="true"/>
+        <entry key="enableSortingByHeader" type="xboolean" value="true"/>
+        <entry key="enableRendererSelection" type="xboolean" value="true"/>
+        <entry key="enableCellCopying" type="xboolean" value="true"/>
+        <entry key="selectionMode" type="xstring" value="EDIT"/>
+        <entry key="showOnlySelectedRows" type="xboolean" value="false"/>
+        <entry key="showOnlySelectedRowsConfigurable" type="xboolean" value="true"/>
+        <entry key="skipRemainingColumns_Internals" type="xboolean" value="false"/>
+        <entry key="forceShowActionBar_Internals" type="xboolean" value="false"/>
+        <entry key="enableDataValueViews_Internals" type="xboolean" value="false"/>
+        <entry key="rowLabel_Internals" type="xstring" value="Rows"/>
+        <entry key="showColumnCount_Internals" type="xboolean" value="true"/>
+    </config>
+    <entry key="customDescription" type="xstring" isnull="true" value=""/>
+    <entry key="state" type="xstring" value="EXECUTED"/>
+    <entry key="factory" type="xstring" value="org.knime.base.views.node.tableview.TableViewNodeFactory"/>
+    <entry key="node-name" type="xstring" value="Table View"/>
+    <entry key="node-bundle-name" type="xstring" value="KNIME Views"/>
+    <entry key="node-bundle-symbolic-name" type="xstring" value="org.knime.base.views"/>
+    <entry key="node-bundle-vendor" type="xstring" value="KNIME AG, Zurich, Switzerland"/>
+    <entry key="node-bundle-version" type="xstring" value="5.12.0.v202606171319"/>
+    <entry key="node-feature-name" type="xstring" value="KNIME Views"/>
+    <entry key="node-feature-symbolic-name" type="xstring" value="org.knime.features.base.views.feature.group"/>
+    <entry key="node-feature-vendor" type="xstring" value="KNIME AG, Zurich, Switzerland"/>
+    <entry key="node-feature-version" type="xstring" value="5.12.0.v202606171319"/>
+    <config key="factory_settings"/>
+    <entry key="name" type="xstring" value="Table View"/>
+    <entry key="hasContent" type="xboolean" value="true"/>
+    <entry key="isInactive" type="xboolean" value="false"/>
+    <config key="ports"/>
+    <config key="internalObjects">
+        <entry key="location" type="xstring" value="internalTables"/>
+        <config key="content">
+            <config key="object_0">
+                <entry key="index" type="xint" value="0"/>
+                <entry key="type" type="xstring" value="table"/>
+                <entry key="table_dir_location" type="xstring" value="object_0"/>
+            </config>
+        </config>
+    </config>
+    <config key="filestores">
+        <entry key="file_store_location" type="xstring" isnull="true" value=""/>
+        <entry key="file_store_id" type="xstring" value="afb8c336-eb1b-4d94-a208-2acf412be01c"/>
+    </config>
+</config>

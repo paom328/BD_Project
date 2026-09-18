@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://www.knime.org/2008/09/XMLConfig" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.knime.org/2008/09/XMLConfig http://www.knime.org/XMLConfig_2008_09.xsd" key="settings.xml">
+    <entry key="node_file" type="xstring" value="settings.xml"/>
+    <config key="flow_stack"/>
+    <config key="internal_node_subsettings">
+        <entry key="memory_policy" type="xstring" value="CacheSmallInMemory"/>
+    </config>
+    <config key="model">
+        <entry key="python3_command" type="xstring" value=""/>
+        <entry key="script" type="xstring" value="import knime.scripting.io as knio%%00010import pandas as pd%%00010import numpy as np%%00010from prophet import Prophet%%00010from statsmodels.tsa.api import Holt%%00010from sklearn.metrics import mean_absolute_error, mean_squared_error%%00010%%00010# 1. Read input data from KNIME%%00010df_all = knio.input_tables[0].to_pandas()%%00010%%00010forecasts_list = []%%00010metrics_list = []%%00010horizon = 7  # 2024–2030%%00010%%00010# Disable Prophet logging spam%%00010import logging%%00010logging.getLogger('cmdstanpy').setLevel(logging.ERROR)%%00010logging.getLogger('prophet').setLevel(logging.ERROR)%%00010%%00010# 2. Process each municipality independently%%00010for municipality, df_group in df_all.groupby('ColumnNames'):%%00010    df_sorted = df_group.sort_values('año').copy()%%00010    %%00010    # Target values and year timeline%%00010    y_actual = df_sorted['ColumnValues'].astype(float).values%%00010    years = df_sorted['año'].astype(int).values%%00010    last_year = years[-1]%%00010    future_years = list(range(last_year + 1, last_year + 1 + horizon))%%00010    %%00010    # -------------------------------------------------------------%%00010    # MODEL 1: Holt's Linear Trend%%00010    # -------------------------------------------------------------%%00010    try:%%00010        model_holt = Holt(y_actual, initialization_method=&quot;estimated&quot;).fit()%%00010        pred_holt_in = model_holt.fittedvalues%%00010        forecast_holt = model_holt.forecast(horizon)%%00010        %%00010        mae_holt = mean_absolute_error(y_actual, pred_holt_in)%%00010        rmse_holt = np.sqrt(mean_squared_error(y_actual, pred_holt_in))%%00010    except Exception:%%00010        mae_holt, rmse_holt, forecast_holt = np.nan, np.nan, np.zeros(horizon)%%00010%%00010    # -------------------------------------------------------------%%00010    # MODEL 2: Prophet%%00010    # -------------------------------------------------------------%%00010    try:%%00010        df_prophet = pd.DataFrame({%%00010            'ds': pd.to_datetime(df_sorted['año'].astype(str) + '-01-01'),%%00010            'y': y_actual%%00010        })%%00010        %%00010        model_p = Prophet(%%00010            yearly_seasonality=False,%%00010            weekly_seasonality=False,%%00010            daily_seasonality=False,%%00010            growth='linear'%%00010        )%%00010        model_p.fit(df_prophet)%%00010        %%00010        # In-sample predictions%%00010        in_sample_p = model_p.predict(df_prophet)%%00010        mae_prophet = mean_absolute_error(y_actual, in_sample_p['yhat'].values)%%00010        rmse_prophet = np.sqrt(mean_squared_error(y_actual, in_sample_p['yhat'].values))%%00010        %%00010        # Out-of-sample forecast%%00010        future_p = model_p.make_future_dataframe(periods=horizon, freq='YS')%%00010        forecast_p = model_p.predict(future_p).tail(horizon)['yhat'].values%%00010    except Exception:%%00010        mae_prophet, rmse_prophet, forecast_p = np.nan, np.nan, np.zeros(horizon)%%00010%%00010    # -------------------------------------------------------------%%00010    # SELECTION &amp; METRICS RECORDING%%00010    # -------------------------------------------------------------%%00010    best_model = &quot;Holt&quot; if mae_holt &lt;= mae_prophet else &quot;Prophet&quot;%%00010    best_forecast = forecast_holt if best_model == &quot;Holt&quot; else forecast_p%%00010%%00010    # Record model performance metrics%%00010    metrics_list.append({%%00010        'Municipality': municipality,%%00010        'MAE_Holt': mae_holt,%%00010        'RMSE_Holt': rmse_holt,%%00010        'MAE_Prophet': mae_prophet,%%00010        'RMSE_Prophet': rmse_prophet,%%00010        'Selected_Best_Model': best_model%%00010    })%%00010%%00010    # Record future predictions for both + winner%%00010    df_series_fc = pd.DataFrame({%%00010        'año': future_years,%%00010        'ColumnNames': municipality,%%00010        'Forecast_Holt': forecast_holt,%%00010        'Forecast_Prophet': forecast_p,%%00010        'Forecast_Best_Model': best_forecast,%%00010        'Selected_Model': best_model%%00010    })%%00010    forecasts_list.append(df_series_fc)%%00010%%00010# 3. Combine results%%00010df_final_forecasts = pd.concat(forecasts_list, ignore_index=True)%%00010df_metrics_summary = pd.DataFrame(metrics_list)%%00010%%00010# 4. Expose output ports to KNIME%%00010knio.output_tables[0] = knio.Table.from_pandas(df_final_forecasts)%%00010knio.output_tables[1] = knio.Table.from_pandas(df_metrics_summary)"/>
+    </config>
+    <config key="variables">
+        <entry key="version" type="xstring" value="V_2019_09_13"/>
+        <config key="tree">
+            <config key="python3_command">
+                <entry key="used_variable" type="xstring" value=""/>
+                <entry key="used_variable_flawed" type="xboolean" value="false"/>
+                <entry key="exposed_variable" type="xstring" isnull="true" value=""/>
+            </config>
+        </config>
+    </config>
+    <entry key="customDescription" type="xstring" isnull="true" value=""/>
+    <entry key="state" type="xstring" value="EXECUTED"/>
+    <entry key="factory" type="xstring" value="org.knime.python3.scripting.nodes2.script.PythonScriptNodeFactory"/>
+    <entry key="node-name" type="xstring" value="Python Script"/>
+    <entry key="node-bundle-name" type="xstring" value="KNIME Python 3 - Scripting Nodes"/>
+    <entry key="node-bundle-symbolic-name" type="xstring" value="org.knime.python3.scripting.nodes"/>
+    <entry key="node-bundle-vendor" type="xstring" value="KNIME AG, Zurich, Switzerland"/>
+    <entry key="node-bundle-version" type="xstring" value="5.12.0.v202606171811"/>
+    <entry key="node-feature-name" type="xstring" value="KNIME Python Integration"/>
+    <entry key="node-feature-symbolic-name" type="xstring" value="org.knime.features.python3.scripting.feature.group"/>
+    <entry key="node-feature-vendor" type="xstring" value="KNIME AG, Zurich, Switzerland"/>
+    <entry key="node-feature-version" type="xstring" value="5.12.0.v202606171811"/>
+    <config key="factory_settings"/>
+    <config key="node_creation_config">
+        <config key="Python environment"/>
+        <config key="Input object (pickled)"/>
+        <config key="Input table">
+            <config key="port_0">
+                <entry key="object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            </config>
+        </config>
+        <config key="Output table">
+            <config key="port_0">
+                <entry key="object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            </config>
+            <config key="port_1">
+                <entry key="object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            </config>
+        </config>
+        <config key="Output image"/>
+        <config key="Output object (pickled)"/>
+    </config>
+    <entry key="name" type="xstring" value="Python Script"/>
+    <entry key="hasContent" type="xboolean" value="true"/>
+    <entry key="isInactive" type="xboolean" value="false"/>
+    <config key="ports">
+        <config key="port_1">
+            <entry key="index" type="xint" value="1"/>
+            <entry key="port_spec_class" type="xstring" value="org.knime.core.data.DataTableSpec"/>
+            <entry key="port_object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            <entry key="port_object_summary" type="xstring" value="Rows: 63, Cols: 6"/>
+            <entry key="port_dir_location" type="xstring" value="port_1"/>
+        </config>
+        <config key="port_2">
+            <entry key="index" type="xint" value="2"/>
+            <entry key="port_spec_class" type="xstring" value="org.knime.core.data.DataTableSpec"/>
+            <entry key="port_object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            <entry key="port_object_summary" type="xstring" value="Rows: 9, Cols: 6"/>
+            <entry key="port_dir_location" type="xstring" value="port_2"/>
+        </config>
+    </config>
+    <config key="filestores">
+        <entry key="file_store_location" type="xstring" isnull="true" value=""/>
+        <entry key="file_store_id" type="xstring" value="1ffa9af0-1cd7-4fce-bd30-66872f020bfe"/>
+    </config>
+</config>

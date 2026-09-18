@@ -1,0 +1,123 @@
+{
+  "name": "BD_Project_Supply_Chain_ETL_ML_Pipeline",
+  "description": "End-to-end supply chain analytics workflow: Bronze ingestion → Silver transformations → Gold ML forecasting → Gold KPIs → Data Quality validation",
+  "tags": {
+    "project": "BD_Project",
+    "owner": "pao.m.328@gmail.com",
+    "environment": "production",
+    "pipeline_type": "medallion_ml"
+  },
+  "email_notifications": {
+    "on_start": ["pao.m.328@gmail.com"],
+    "on_success": ["pao.m.328@gmail.com"],
+    "on_failure": ["pao.m.328@gmail.com"],
+    "no_alert_for_skipped_runs": false
+  },
+  "timeout_seconds": 28800,
+  "max_concurrent_runs": 1,
+  "tasks": [
+    {
+      "task_key": "bronze_ingestion",
+      "description": "Ingest raw Excel files into Bronze layer (catalog_lcom.bronze)",
+      "notebook_task": {
+        "notebook_path": "/Users/pao.m.328@gmail.com/BD_Project/notebooks/01_bronze_ingestion",
+        "source": "WORKSPACE"
+      },
+      "timeout_seconds": 3600,
+      "max_retries": 2,
+      "min_retry_interval_millis": 60000,
+      "retry_on_timeout": true
+    },
+    {
+      "task_key": "silver_transformations",
+      "description": "Apply KNIME logic transformations and create Silver master table",
+      "depends_on": [
+        {"task_key": "bronze_ingestion"}
+      ],
+      "notebook_task": {
+        "notebook_path": "/Users/pao.m.328@gmail.com/BD_Project/notebooks/02_silver_transformations",
+        "source": "WORKSPACE"
+      },
+      "timeout_seconds": 3600,
+      "max_retries": 2,
+      "min_retry_interval_millis": 60000,
+      "retry_on_timeout": true
+    },
+    {
+      "task_key": "gold_ml_forecasting",
+      "description": "Train ML models (stockout classifier, demand forecasting) and generate predictions",
+      "depends_on": [
+        {"task_key": "silver_transformations"}
+      ],
+      "notebook_task": {
+        "notebook_path": "/Users/pao.m.328@gmail.com/BD_Project/notebooks/03_gold_ml_forecasting",
+        "source": "WORKSPACE"
+      },
+      "timeout_seconds": 7200,
+      "max_retries": 1,
+      "min_retry_interval_millis": 120000,
+      "retry_on_timeout": false
+    },
+    {
+      "task_key": "gold_kpis_aggregation",
+      "description": "Calculate executive KPIs and create dashboard-ready aggregations",
+      "depends_on": [
+        {"task_key": "gold_ml_forecasting"}
+      ],
+      "notebook_task": {
+        "notebook_path": "/Users/pao.m.328@gmail.com/BD_Project/notebooks/04_gold_kpis_aggregation",
+        "source": "WORKSPACE"
+      },
+      "timeout_seconds": 1800,
+      "max_retries": 2,
+      "min_retry_interval_millis": 60000,
+      "retry_on_timeout": true
+    },
+    {
+      "task_key": "data_quality_checks",
+      "description": "Run comprehensive data quality validations across all layers",
+      "depends_on": [
+        {"task_key": "gold_kpis_aggregation"}
+      ],
+      "notebook_task": {
+        "notebook_path": "/Users/pao.m.328@gmail.com/BD_Project/notebooks/05_data_quality_checks",
+        "source": "WORKSPACE"
+      },
+      "timeout_seconds": 1800,
+      "max_retries": 1,
+      "min_retry_interval_millis": 60000,
+      "retry_on_timeout": false
+    }
+  ],
+  "job_clusters": [
+    {
+      "job_cluster_key": "bd_project_cluster",
+      "new_cluster": {
+        "spark_version": "14.3.x-scala2.12",
+        "node_type_id": "i3.xlarge",
+        "num_workers": 2,
+        "spark_conf": {
+          "spark.databricks.delta.preview.enabled": "true",
+          "spark.sql.adaptive.enabled": "true",
+          "spark.databricks.io.cache.enabled": "true"
+        },
+        "custom_tags": {
+          "project": "BD_Project",
+          "environment": "production"
+        },
+        "spark_env_vars": {
+          "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+        },
+        "enable_elastic_disk": true,
+        "data_security_mode": "SINGLE_USER",
+        "runtime_engine": "STANDARD"
+      }
+    }
+  ],
+  "schedule": {
+    "quartz_cron_expression": "0 0 2 * * ?",
+    "timezone_id": "America/Bogota",
+    "pause_status": "UNPAUSED"
+  },
+  "format": "MULTI_TASK"
+}

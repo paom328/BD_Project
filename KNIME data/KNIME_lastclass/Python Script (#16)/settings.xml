@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://www.knime.org/2008/09/XMLConfig" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.knime.org/2008/09/XMLConfig http://www.knime.org/XMLConfig_2008_09.xsd" key="settings.xml">
+    <entry key="node_file" type="xstring" value="settings.xml"/>
+    <config key="flow_stack"/>
+    <config key="internal_node_subsettings">
+        <entry key="memory_policy" type="xstring" value="CacheSmallInMemory"/>
+    </config>
+    <config key="model">
+        <entry key="python3_command" type="xstring" value=""/>
+        <entry key="script" type="xstring" value="import knime.scripting.io as knio%%00010import pandas as pd%%00010import json%%00010import urllib.request%%00010%%00010# Load input table from KNIME pipeline%%00010df = knio.input_tables[0].to_pandas()%%00010%%00010# Target Ollama API configuration%%00010OLLAMA_URL = &quot;http://localhost:11434/api/generate&quot;%%00010MODEL_NAME = &quot;mistral:latest&quot;%%00010%%00010def extract_info_with_mistral(text):%%00010    if not isinstance(text, str) or not text.strip():%%00010        return &quot;Unknown&quot;, &quot;None&quot;%%00010    %%00010    # Define extraction prompt for Mistral%%00010    prompt = f&quot;&quot;&quot;You are an expert NLP feedback classifier. %%00010Analyze the following employee feedback:%%00010&quot;{text}&quot;%%00010%%00010Extract two pieces of information:%%000101. Category: Select EXACTLY one from [Compensation, Leadership, IT Support, Work Conditions, Other]%%000102. Primary Concern: A short 2-5 word summary of the main issue.%%00010%%00010Return ONLY a valid JSON object without markdown formatting, using this exact schema:%%00010{{&quot;category&quot;: &quot;CategoryName&quot;, &quot;concern&quot;: &quot;Short concern summary&quot;}}%%00010&quot;&quot;&quot;%%00010%%00010    payload = {%%00010        &quot;model&quot;: MODEL_NAME,%%00010        &quot;prompt&quot;: prompt,%%00010        &quot;stream&quot;: False,%%00010        &quot;format&quot;: &quot;json&quot;%%00010    }%%00010%%00010    try:%%00010        req = urllib.request.Request(%%00010            OLLAMA_URL,%%00010            data=json.dumps(payload).encode(&quot;utf-8&quot;),%%00010            headers={&quot;Content-Type&quot;: &quot;application/json&quot;}%%00010        )%%00010        %%00010        with urllib.request.urlopen(req, timeout=30) as response:%%00010            res_data = json.loads(response.read().decode(&quot;utf-8&quot;))%%00010            result_json = json.loads(res_data.get(&quot;response&quot;, &quot;{}&quot;))%%00010            %%00010            category = result_json.get(&quot;category&quot;, &quot;Other&quot;)%%00010            concern = result_json.get(&quot;concern&quot;, &quot;None&quot;)%%00010            return category, concern%%00010%%00010    except Exception as e:%%00010        return &quot;Error&quot;, str(e)%%00010%%00010# Execute Mistral extraction across rows%%00010categories = []%%00010concerns = []%%00010%%00010for text in df['feedback_clean']:%%00010    cat, con = extract_info_with_mistral(text)%%00010    categories.append(cat)%%00010    concerns.append(con)%%00010%%00010# Append extracted information back to dataset%%00010df['mistral_category'] = categories%%00010df['mistral_concern'] = concerns%%00010%%00010# Output results to KNIME%%00010knio.output_tables[0] = knio.Table.from_pandas(df)"/>
+    </config>
+    <config key="variables">
+        <entry key="version" type="xstring" value="V_2019_09_13"/>
+        <config key="tree">
+            <config key="python3_command">
+                <entry key="used_variable" type="xstring" value=""/>
+                <entry key="used_variable_flawed" type="xboolean" value="false"/>
+                <entry key="exposed_variable" type="xstring" isnull="true" value=""/>
+            </config>
+        </config>
+    </config>
+    <entry key="customDescription" type="xstring" isnull="true" value=""/>
+    <entry key="state" type="xstring" value="EXECUTED"/>
+    <entry key="factory" type="xstring" value="org.knime.python3.scripting.nodes2.script.PythonScriptNodeFactory"/>
+    <entry key="node-name" type="xstring" value="Python Script"/>
+    <entry key="node-bundle-name" type="xstring" value="KNIME Python 3 - Scripting Nodes"/>
+    <entry key="node-bundle-symbolic-name" type="xstring" value="org.knime.python3.scripting.nodes"/>
+    <entry key="node-bundle-vendor" type="xstring" value="KNIME AG, Zurich, Switzerland"/>
+    <entry key="node-bundle-version" type="xstring" value="5.12.0.v202606171811"/>
+    <entry key="node-feature-name" type="xstring" value="KNIME Python Integration"/>
+    <entry key="node-feature-symbolic-name" type="xstring" value="org.knime.features.python3.scripting.feature.group"/>
+    <entry key="node-feature-vendor" type="xstring" value="KNIME AG, Zurich, Switzerland"/>
+    <entry key="node-feature-version" type="xstring" value="5.12.0.v202606171811"/>
+    <config key="factory_settings"/>
+    <config key="node_creation_config">
+        <config key="Python environment"/>
+        <config key="Input object (pickled)"/>
+        <config key="Input table">
+            <config key="port_0">
+                <entry key="object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            </config>
+        </config>
+        <config key="Output table">
+            <config key="port_0">
+                <entry key="object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            </config>
+        </config>
+        <config key="Output image"/>
+        <config key="Output object (pickled)"/>
+    </config>
+    <entry key="name" type="xstring" value="Python Script"/>
+    <entry key="hasContent" type="xboolean" value="true"/>
+    <entry key="isInactive" type="xboolean" value="false"/>
+    <config key="ports">
+        <config key="port_1">
+            <entry key="index" type="xint" value="1"/>
+            <entry key="port_spec_class" type="xstring" value="org.knime.core.data.DataTableSpec"/>
+            <entry key="port_object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            <entry key="port_object_summary" type="xstring" value="Rows: 500, Cols: 58"/>
+            <entry key="port_dir_location" type="xstring" value="port_1"/>
+        </config>
+    </config>
+    <config key="filestores">
+        <entry key="file_store_location" type="xstring" isnull="true" value=""/>
+        <entry key="file_store_id" type="xstring" value="5a4551c2-ecf1-4362-b3e2-d6114ea520a7"/>
+    </config>
+</config>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://www.knime.org/2008/09/XMLConfig" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.knime.org/2008/09/XMLConfig http://www.knime.org/XMLConfig_2008_09.xsd" key="settings.xml">
+    <entry key="node_file" type="xstring" value="settings.xml"/>
+    <config key="flow_stack"/>
+    <config key="internal_node_subsettings">
+        <entry key="memory_policy" type="xstring" value="CacheSmallInMemory"/>
+    </config>
+    <config key="model">
+        <entry key="python3_command" type="xstring" value=""/>
+        <entry key="script" type="xstring" value="import knime.scripting.io as knio%%00010import pandas as pd%%00010from prophet import Prophet%%00010%%00010# 1. Read full unpivoted dataset%%00010df_all = knio.input_tables[0].to_pandas()%%00010%%00010forecast_list = []%%00010%%00010# 2. Iterate over each municipality directly in Python%%00010for municipality, df_group in df_all.groupby('ColumnNames'):%%00010    # Prepare individual series%%00010    df_prophet = pd.DataFrame({%%00010        'ds': pd.to_datetime(df_group['año'].astype(str) + '-01-01'),%%00010        'y': df_group['ColumnValues'].astype(float)%%00010    })%%00010    %%00010    # Initialize and fit Prophet%%00010    model = Prophet(%%00010        yearly_seasonality=False,%%00010        weekly_seasonality=False,%%00010        daily_seasonality=False,%%00010        growth='linear'%%00010    )%%00010    model.fit(df_prophet)%%00010    %%00010    # Forecast 7 years ahead (2024-2030)%%00010    future = model.make_future_dataframe(periods=7, freq='YS')%%00010    forecast = model.predict(future)%%00010    %%00010    # Get future 7 years%%00010    future_forecast = forecast.tail(7).copy()%%00010    future_forecast['año'] = future_forecast['ds'].dt.year%%00010    future_forecast['ColumnNames'] = municipality%%00010    future_forecast['Forecast_Prophet'] = future_forecast['yhat']%%00010    %%00010    forecast_list.append(future_forecast[['año', 'ColumnNames', 'Forecast_Prophet']])%%00010%%00010# 3. Combine all forecasts into one single table%%00010output_df = pd.concat(forecast_list, ignore_index=True)%%00010%%00010# 4. Output to KNIME%%00010knio.output_tables[0] = knio.Table.from_pandas(output_df)"/>
+    </config>
+    <config key="variables">
+        <entry key="version" type="xstring" value="V_2019_09_13"/>
+        <config key="tree">
+            <config key="python3_command">
+                <entry key="used_variable" type="xstring" value=""/>
+                <entry key="used_variable_flawed" type="xboolean" value="false"/>
+                <entry key="exposed_variable" type="xstring" isnull="true" value=""/>
+            </config>
+        </config>
+    </config>
+    <entry key="customDescription" type="xstring" isnull="true" value=""/>
+    <entry key="state" type="xstring" value="EXECUTED"/>
+    <entry key="factory" type="xstring" value="org.knime.python3.scripting.nodes2.script.PythonScriptNodeFactory"/>
+    <entry key="node-name" type="xstring" value="Python Script"/>
+    <entry key="node-bundle-name" type="xstring" value="KNIME Python 3 - Scripting Nodes"/>
+    <entry key="node-bundle-symbolic-name" type="xstring" value="org.knime.python3.scripting.nodes"/>
+    <entry key="node-bundle-vendor" type="xstring" value="KNIME AG, Zurich, Switzerland"/>
+    <entry key="node-bundle-version" type="xstring" value="5.12.0.v202606171811"/>
+    <entry key="node-feature-name" type="xstring" value="KNIME Python Integration"/>
+    <entry key="node-feature-symbolic-name" type="xstring" value="org.knime.features.python3.scripting.feature.group"/>
+    <entry key="node-feature-vendor" type="xstring" value="KNIME AG, Zurich, Switzerland"/>
+    <entry key="node-feature-version" type="xstring" value="5.12.0.v202606171811"/>
+    <config key="factory_settings"/>
+    <config key="node_creation_config">
+        <config key="Python environment"/>
+        <config key="Input object (pickled)"/>
+        <config key="Input table">
+            <config key="port_0">
+                <entry key="object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            </config>
+        </config>
+        <config key="Output table">
+            <config key="port_0">
+                <entry key="object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            </config>
+        </config>
+        <config key="Output image"/>
+        <config key="Output object (pickled)"/>
+    </config>
+    <entry key="name" type="xstring" value="Python Script"/>
+    <entry key="hasContent" type="xboolean" value="true"/>
+    <entry key="isInactive" type="xboolean" value="false"/>
+    <config key="ports">
+        <config key="port_1">
+            <entry key="index" type="xint" value="1"/>
+            <entry key="port_spec_class" type="xstring" value="org.knime.core.data.DataTableSpec"/>
+            <entry key="port_object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            <entry key="port_object_summary" type="xstring" value="Rows: 63, Cols: 3"/>
+            <entry key="port_dir_location" type="xstring" value="port_1"/>
+        </config>
+    </config>
+    <config key="filestores">
+        <entry key="file_store_location" type="xstring" isnull="true" value=""/>
+        <entry key="file_store_id" type="xstring" value="1fea8387-71f4-4f37-b071-f3732a5e8915"/>
+    </config>
+</config>

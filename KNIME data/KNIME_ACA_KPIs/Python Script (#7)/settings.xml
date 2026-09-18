@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://www.knime.org/2008/09/XMLConfig" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.knime.org/2008/09/XMLConfig http://www.knime.org/XMLConfig_2008_09.xsd" key="settings.xml">
+    <entry key="node_file" type="xstring" value="settings.xml"/>
+    <config key="flow_stack"/>
+    <config key="internal_node_subsettings">
+        <entry key="memory_policy" type="xstring" value="CacheSmallInMemory"/>
+    </config>
+    <config key="model">
+        <entry key="python3_command" type="xstring" value=""/>
+        <entry key="script" type="xstring" value="import knime.scripting.io as knio%%00010import pandas as pd%%00010import numpy as np%%00010from prophet import Prophet%%00010from statsmodels.tsa.api import Holt%%00010import lightgbm as lgb%%00010import xgboost as xgb%%00010from sklearn.metrics import mean_squared_error%%00010import logging%%00010%%00010logging.getLogger('cmdstanpy').setLevel(logging.ERROR)%%00010logging.getLogger('prophet').setLevel(logging.ERROR)%%00010%%00010df_all = knio.input_tables[0].to_pandas()%%00010%%00010horizon = 4%%00010forecasts_list = []%%00010metrics_list = []%%00010%%00010def create_lags(df, target_col, lags=[1, 2, 3, 6]):%%00010    for lag in lags:%%00010        df[f'lag_{lag}'] = df[target_col].shift(lag).bfill()%%00010    return df%%00010%%00010for label_name, df_group in df_all.groupby('ColumnNames'):%%00010    df_sorted = df_group.sort_values('mes').reset_index(drop=True).copy()%%00010    %%00010    y_raw = df_sorted['ColumnValues'].astype(float).values%%00010    dates = pd.to_datetime(df_sorted['mes'])%%00010    %%00010    # Historical Bounds%%00010    non_zero_history = y_raw[y_raw &gt; 0]%%00010    min_baseline_floor = float(np.median(non_zero_history)) if len(non_zero_history) &gt; 0 else 1.0%%00010    max_cap = float(np.max(y_raw) * 3.0)  # Max 3x historical peak to block explosions%%00010    %%00010    y_log = np.log1p(np.maximum(y_raw, 0))%%00010%%00010    # --- MODEL 1: Holt (Damped to prevent exponential spikes) ---%%00010    try:%%00010        model_holt = Holt(y_log, initialization_method=&quot;estimated&quot;, damped_trend=True).fit()%%00010        pred_holt_raw = np.expm1(model_holt.fittedvalues)%%00010        fc_holt_raw = np.expm1(model_holt.forecast(horizon))%%00010        %%00010        pred_holt_raw = np.clip(pred_holt_raw, min_baseline_floor, max_cap)%%00010        fc_holt_raw = np.clip(fc_holt_raw, min_baseline_floor, max_cap)%%00010        mse_holt = mean_squared_error(y_raw, pred_holt_raw)%%00010    except Exception:%%00010        pred_holt_raw, fc_holt_raw, mse_holt = np.full_like(y_raw, min_baseline_floor), np.full(horizon, min_baseline_floor), np.inf%%00010%%00010    # --- MODEL 2: Prophet ---%%00010    try:%%00010        df_p = pd.DataFrame({'ds': dates, 'y': y_log})%%00010        model_p = Prophet(yearly_seasonality=True, weekly_seasonality=False, daily_seasonality=False)%%00010        model_p.fit(df_p)%%00010        %%00010        pred_p_raw = np.expm1(model_p.predict(df_p)['yhat'].values)%%00010        future_p = model_p.make_future_dataframe(periods=horizon, freq='MS')%%00010        fc_p_raw = np.expm1(model_p.predict(future_p).tail(horizon)['yhat'].values)%%00010        %%00010        pred_p_raw = np.clip(pred_p_raw, min_baseline_floor, max_cap)%%00010        fc_p_raw = np.clip(fc_p_raw, min_baseline_floor, max_cap)%%00010        mse_prophet = mean_squared_error(y_raw, pred_p_raw)%%00010    except Exception:%%00010        pred_p_raw, fc_p_raw, mse_prophet = np.full_like(y_raw, min_baseline_floor), np.full(horizon, min_baseline_floor), np.inf%%00010%%00010    # --- Feature Engineering ---%%00010    df_tree = pd.DataFrame({'mes': dates, 'y': y_raw})%%00010    df_tree['month'] = df_tree['mes'].dt.month%%00010    df_tree = create_lags(df_tree, 'y', lags=[1, 2, 3, 6])%%00010    %%00010    df_train = df_tree.bfill().reset_index().copy()%%00010    X_train = df_train[['month', 'lag_1', 'lag_2', 'lag_3', 'lag_6']]%%00010    y_train = df_train['y']%%00010    valid_indices = df_train['index'].values%%00010%%00010    # --- MODEL 3: LightGBM ---%%00010    try:%%00010        model_lgb = lgb.LGBMRegressor(objective='poisson', n_estimators=50, learning_rate=0.05, random_state=42, verbosity=-1)%%00010        model_lgb.fit(X_train, y_train)%%00010        pred_lgb_train = model_lgb.predict(X_train)%%00010        %%00010        pred_lgb_raw = np.zeros_like(y_raw)%%00010        pred_lgb_raw[valid_indices] = pred_lgb_train%%00010        mse_lgb = mean_squared_error(y_train, pred_lgb_train)%%00010        %%00010        history_lgb = list(y_raw)%%00010        fc_lgb_raw = []%%00010        last_date = dates.max()%%00010        %%00010        for i in range(horizon):%%00010            next_date = last_date + pd.DateOffset(months=i+1)%%00010            feat = pd.DataFrame([{%%00010                'month': next_date.month,%%00010                'lag_1': history_lgb[-1],%%00010                'lag_2': history_lgb[-2],%%00010                'lag_3': history_lgb[-3],%%00010                'lag_6': history_lgb[-6] if len(history_lgb) &gt;= 6 else history_lgb[0]%%00010            }])%%00010            pred = float(np.clip(model_lgb.predict(feat)[0], min_baseline_floor, max_cap))%%00010            fc_lgb_raw.append(pred)%%00010            history_lgb.append(pred)%%00010            %%00010        fc_lgb_raw = np.array(fc_lgb_raw)%%00010    except Exception:%%00010        pred_lgb_raw, fc_lgb_raw, mse_lgb = np.full_like(y_raw, min_baseline_floor), np.full(horizon, min_baseline_floor), np.inf%%00010%%00010    # --- MODEL 4: XGBoost ---%%00010    try:%%00010        model_xgb = xgb.XGBRegressor(objective='count:poisson', n_estimators=50, learning_rate=0.05, random_state=42, verbosity=0)%%00010        model_xgb.fit(X_train, y_train)%%00010        pred_xgb_train = model_xgb.predict(X_train)%%00010        %%00010        pred_xgb_raw = np.zeros_like(y_raw)%%00010        pred_xgb_raw[valid_indices] = pred_xgb_train%%00010        mse_xgb = mean_squared_error(y_train, pred_xgb_train)%%00010        %%00010        history_xgb = list(y_raw)%%00010        fc_xgb_raw = []%%00010        %%00010        for i in range(horizon):%%00010            next_date = last_date + pd.DateOffset(months=i+1)%%00010            feat = pd.DataFrame([{%%00010                'month': next_date.month,%%00010                'lag_1': history_xgb[-1],%%00010                'lag_2': history_xgb[-2],%%00010                'lag_3': history_xgb[-3],%%00010                'lag_6': history_xgb[-6] if len(history_xgb) &gt;= 6 else history_xgb[0]%%00010            }])%%00010            pred = float(np.clip(model_xgb.predict(feat)[0], min_baseline_floor, max_cap))%%00010            fc_xgb_raw.append(pred)%%00010            history_xgb.append(pred)%%00010            %%00010        fc_xgb_raw = np.array(fc_xgb_raw)%%00010    except Exception:%%00010        pred_xgb_raw, fc_xgb_raw, mse_xgb = np.full_like(y_raw, min_baseline_floor), np.full(horizon, min_baseline_floor), np.inf%%00010%%00010    # --- ENSEMBLES ---%%00010    pred_ensemble_simple = (pred_holt_raw + pred_p_raw + pred_lgb_raw + pred_xgb_raw) / 4.0%%00010    fc_ensemble_simple = (fc_holt_raw + fc_p_raw + fc_lgb_raw + fc_xgb_raw) / 4.0%%00010    mse_ensemble_simple = mean_squared_error(y_raw[valid_indices], pred_ensemble_simple[valid_indices])%%00010%%00010    mse_base = np.array([mse_holt, mse_prophet, mse_lgb, mse_xgb])%%00010    inv_mse = 1.0 / np.maximum(mse_base, 1e-6)%%00010    weights = inv_mse / np.sum(inv_mse)%%00010%%00010    pred_ensemble_weighted = (weights[0] * pred_holt_raw + weights[1] * pred_p_raw + weights[2] * pred_lgb_raw + weights[3] * pred_xgb_raw)%%00010    fc_ensemble_weighted = (weights[0] * fc_holt_raw + weights[1] * fc_p_raw + weights[2] * fc_lgb_raw + weights[3] * fc_xgb_raw)%%00010    mse_ensemble_weighted = mean_squared_error(y_raw[valid_indices], pred_ensemble_weighted[valid_indices])%%00010%%00010    # --- SELECTION &amp; REALISTIC CONFIDENCE BOUNDS ---%%00010    all_mse_dict = {%%00010        'Holt': mse_holt,%%00010        'Prophet': mse_prophet,%%00010        'LightGBM': mse_lgb,%%00010        'XGBoost': mse_xgb,%%00010        'Ensemble_Simple': mse_ensemble_simple,%%00010        'Ensemble_Weighted': mse_ensemble_weighted%%00010    }%%00010    %%00010    best_model = min(all_mse_dict, key=all_mse_dict.get)%%00010    lowest_mse = all_mse_dict[best_model]%%00010    %%00010    all_forecasts_dict = {%%00010        'Holt': fc_holt_raw,%%00010        'Prophet': fc_p_raw,%%00010        'LightGBM': fc_lgb_raw,%%00010        'XGBoost': fc_xgb_raw,%%00010        'Ensemble_Simple': fc_ensemble_simple,%%00010        'Ensemble_Weighted': fc_ensemble_weighted%%00010    }%%00010    %%00010    raw_best_fc = all_forecasts_dict[best_model]%%00010    best_fc_raw = np.round(np.clip(raw_best_fc, min_baseline_floor, max_cap))%%00010    %%00010    # Compute residual variance of the winning prediction strategy%%00010    all_historical_preds = {%%00010        'Holt': pred_holt_raw,%%00010        'Prophet': pred_p_raw,%%00010        'LightGBM': pred_lgb_raw,%%00010        'XGBoost': pred_xgb_raw,%%00010        'Ensemble_Simple': pred_ensemble_simple,%%00010        'Ensemble_Weighted': pred_ensemble_weighted%%00010    }%%00010    %%00010    best_hist_pred = all_historical_preds[best_model][valid_indices]%%00010    actuals = y_raw[valid_indices]%%00010    %%00010    residual_std = float(np.std(actuals - best_hist_pred))%%00010    %%00010    # If residual standard deviation is 0 or NaN, default to 10% of historical mean%%00010    if residual_std == 0 or np.isnan(residual_std):%%00010        residual_std = 0.10 * float(np.mean(actuals))%%00010        %%00010    lower_bound = np.round(np.clip(best_fc_raw - (1.96 * residual_std), min_baseline_floor, max_cap))%%00010    upper_bound = np.round(np.clip(best_fc_raw + (1.96 * residual_std), min_baseline_floor, max_cap))%%00010%%00010    metrics_list.append({%%00010        'Label': label_name,%%00010        'MSE_Holt': mse_holt,%%00010        'MSE_Prophet': mse_prophet,%%00010        'MSE_LightGBM': mse_lgb,%%00010        'MSE_XGBoost': mse_xgb,%%00010        'MSE_Ensemble_Simple': mse_ensemble_simple,%%00010        'MSE_Ensemble_Weighted': mse_ensemble_weighted,%%00010        'Selected_Best_Model': best_model,%%00010        'Lowest_MSE': lowest_mse,%%00010        'RMSE': np.sqrt(lowest_mse)%%00010    })%%00010%%00010    future_dates = pd.date_range(start=dates.max() + pd.DateOffset(months=1), periods=horizon, freq='MS')%%00010%%00010    df_fc = pd.DataFrame({%%00010        'mes': future_dates,%%00010        'ColumnNames': label_name,%%00010        'Forecast_Lower_Bound': lower_bound,%%00010        'Forecast_Best_Model': best_fc_raw,%%00010        'Forecast_Upper_Bound': upper_bound,%%00010        'Selected_Model': best_model%%00010    })%%00010    forecasts_list.append(df_fc)%%00010%%00010df_final_fc = pd.concat(forecasts_list, ignore_index=True)%%00010df_metrics = pd.DataFrame(metrics_list)%%00010%%00010df_total = df_final_fc.groupby('mes')[['Forecast_Lower_Bound', 'Forecast_Best_Model', 'Forecast_Upper_Bound']].sum().reset_index()%%00010df_total['ColumnNames'] = 'TOTAL'%%00010df_total['Selected_Model'] = 'Sum_Reconciled'%%00010%%00010df_final_with_total = pd.concat([df_final_fc, df_total], ignore_index=True)%%00010df_final_with_total = df_final_with_total.sort_values(by=['mes', 'ColumnNames']).reset_index(drop=True)%%00010%%00010knio.output_tables[0] = knio.Table.from_pandas(df_final_with_total)%%00010knio.output_tables[1] = knio.Table.from_pandas(df_metrics)"/>
+    </config>
+    <config key="variables">
+        <entry key="version" type="xstring" value="V_2019_09_13"/>
+        <config key="tree">
+            <config key="python3_command">
+                <entry key="used_variable" type="xstring" value=""/>
+                <entry key="used_variable_flawed" type="xboolean" value="false"/>
+                <entry key="exposed_variable" type="xstring" isnull="true" value=""/>
+            </config>
+        </config>
+    </config>
+    <entry key="customDescription" type="xstring" isnull="true" value=""/>
+    <entry key="state" type="xstring" value="EXECUTED"/>
+    <entry key="factory" type="xstring" value="org.knime.python3.scripting.nodes2.script.PythonScriptNodeFactory"/>
+    <entry key="node-name" type="xstring" value="Python Script"/>
+    <entry key="node-bundle-name" type="xstring" value="KNIME Python 3 - Scripting Nodes"/>
+    <entry key="node-bundle-symbolic-name" type="xstring" value="org.knime.python3.scripting.nodes"/>
+    <entry key="node-bundle-vendor" type="xstring" value="KNIME AG, Zurich, Switzerland"/>
+    <entry key="node-bundle-version" type="xstring" value="5.12.0.v202606171811"/>
+    <entry key="node-feature-name" type="xstring" value="KNIME Python Integration"/>
+    <entry key="node-feature-symbolic-name" type="xstring" value="org.knime.features.python3.scripting.feature.group"/>
+    <entry key="node-feature-vendor" type="xstring" value="KNIME AG, Zurich, Switzerland"/>
+    <entry key="node-feature-version" type="xstring" value="5.12.0.v202606171811"/>
+    <config key="factory_settings"/>
+    <config key="node_creation_config">
+        <config key="Python environment"/>
+        <config key="Input object (pickled)"/>
+        <config key="Input table">
+            <config key="port_0">
+                <entry key="object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            </config>
+        </config>
+        <config key="Output table">
+            <config key="port_0">
+                <entry key="object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            </config>
+            <config key="port_1">
+                <entry key="object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            </config>
+        </config>
+        <config key="Output image"/>
+        <config key="Output object (pickled)"/>
+    </config>
+    <entry key="name" type="xstring" value="Python Script"/>
+    <entry key="hasContent" type="xboolean" value="true"/>
+    <entry key="isInactive" type="xboolean" value="false"/>
+    <config key="ports">
+        <config key="port_1">
+            <entry key="index" type="xint" value="1"/>
+            <entry key="port_spec_class" type="xstring" value="org.knime.core.data.DataTableSpec"/>
+            <entry key="port_object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            <entry key="port_object_summary" type="xstring" value="Rows: 20, Cols: 6"/>
+            <entry key="port_dir_location" type="xstring" value="port_1"/>
+        </config>
+        <config key="port_2">
+            <entry key="index" type="xint" value="2"/>
+            <entry key="port_spec_class" type="xstring" value="org.knime.core.data.DataTableSpec"/>
+            <entry key="port_object_class" type="xstring" value="org.knime.core.node.BufferedDataTable"/>
+            <entry key="port_object_summary" type="xstring" value="Rows: 4, Cols: 10"/>
+            <entry key="port_dir_location" type="xstring" value="port_2"/>
+        </config>
+    </config>
+    <config key="filestores">
+        <entry key="file_store_location" type="xstring" isnull="true" value=""/>
+        <entry key="file_store_id" type="xstring" value="36ad7d53-4c8f-42bc-a4d8-c8cccd14b6e3"/>
+    </config>
+</config>
