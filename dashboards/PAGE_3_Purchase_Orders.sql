@@ -51,10 +51,10 @@ SELECT
 FROM (
   SELECT 
     cod_pus,
-    TO_TIMESTAMP(`FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)`, 'dd/MM/yyyy HH:mm') AS order_resolved,
-    DATE_SUB(TO_TIMESTAMP(`FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)`, 'dd/MM/yyyy HH:mm'), 2) AS order_created  -- Assume 2-day default lag
+    `FECHA_DE_SOLUCIÓN_DD_MM_AAAA` AS order_resolved,
+    DATE_SUB(`FECHA_DE_SOLUCIÓN_DD_MM_AAAA`, 2) AS order_created  -- Assume 2-day default lag
   FROM catalog_lcom.bronze.oc_agosto_raw
-  WHERE `FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)` IS NOT NULL
+  WHERE `FECHA_DE_SOLUCIÓN_DD_MM_AAAA` IS NOT NULL
     AND UPPER(TRIM(ESTADO)) = 'EJECUTADO_EXITOSO'
 ) resolution_times;
 
@@ -97,15 +97,15 @@ WITH order_lead_times AS (
     UPPER(TRIM(DEPARTAMENTO)) AS department,
     UPPER(TRIM(CIUDAD_SEDE)) AS city_sede,
     cod_pus,
-    TO_TIMESTAMP(`FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)`, 'dd/MM/yyyy HH:mm') AS resolution_date,
+    `FECHA_DE_SOLUCIÓN_DD_MM_AAAA` AS resolution_date,
     -- Assuming order request date is 2 days before resolution for demonstration
     DATEDIFF(
       HOUR,
-      DATE_SUB(TO_TIMESTAMP(`FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)`, 'dd/MM/yyyy HH:mm'), 2),
-      TO_TIMESTAMP(`FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)`, 'dd/MM/yyyy HH:mm')
+      DATE_SUB(`FECHA_DE_SOLUCIÓN_DD_MM_AAAA`, 2),
+      `FECHA_DE_SOLUCIÓN_DD_MM_AAAA`
     ) AS lead_time_hours
   FROM catalog_lcom.bronze.oc_agosto_raw
-  WHERE `FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)` IS NOT NULL
+  WHERE `FECHA_DE_SOLUCIÓN_DD_MM_AAAA` IS NOT NULL
     AND UPPER(TRIM(ESTADO)) = 'EJECUTADO_EXITOSO'
 )
 SELECT 
@@ -192,14 +192,14 @@ LIMIT 15;
 
 WITH daily_orders AS (
   SELECT 
-    DATE(TO_TIMESTAMP(`FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)`, 'dd/MM/yyyy HH:mm')) AS order_date,
+    DATE(`FECHA_DE_SOLUCIÓN_DD_MM_AAAA`) AS order_date,
     COUNT(*) AS daily_order_count,
     SUM(CAST(ROLLOS_ENTREGADOS AS INT)) AS daily_rolls_delivered,
     COUNT(DISTINCT cod_pus) AS daily_sites_served
   FROM catalog_lcom.bronze.oc_agosto_raw
-  WHERE `FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)` IS NOT NULL
+  WHERE `FECHA_DE_SOLUCIÓN_DD_MM_AAAA` IS NOT NULL
     AND UPPER(TRIM(ESTADO)) = 'EJECUTADO_EXITOSO'
-  GROUP BY DATE(TO_TIMESTAMP(`FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)`, 'dd/MM/yyyy HH:mm'))
+  GROUP BY DATE(`FECHA_DE_SOLUCIÓN_DD_MM_AAAA`)
 )
 SELECT 
   order_date,
@@ -258,7 +258,7 @@ SELECT
   UPPER(TRIM(CIUDAD)) AS delivery_city,
   COALESCE(UPPER(TRIM(TIPOLOGIA)), 'N/A') AS site_typology,
   COALESCE(UPPER(TRIM(`TIPOLOGIA_ROLLOS`)), 'N/A') AS roll_typology,
-  TO_TIMESTAMP(`FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)`, 'dd/MM/yyyy HH:mm') AS resolution_date,
+  `FECHA_DE_SOLUCIÓN_DD_MM_AAAA` AS resolution_date,
   UPPER(TRIM(ESTADO)) AS order_status,
   CAST(ROLLOS_ENTREGADOS AS INT) AS rolls_delivered,
   COALESCE(UPPER(TRIM(`DESCRIPCIÓN`)), 'N/A') AS description,
@@ -271,7 +271,7 @@ SELECT
   END AS row_background_color
 FROM catalog_lcom.bronze.oc_agosto_raw
 WHERE 1=1
-ORDER BY TO_TIMESTAMP(`FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)`, 'dd/MM/yyyy HH:mm') DESC
+ORDER BY `FECHA_DE_SOLUCIÓN_DD_MM_AAAA` DESC
 LIMIT 500;
 
 

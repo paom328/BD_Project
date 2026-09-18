@@ -19,16 +19,16 @@
 
 -- Card 2.1.a: ML Stockout Predictions Count
 SELECT 
-  SUM(ml_stockout_risk_pred) AS ml_predicted_stockouts,
+  SUM(ml_stockout_prediction) AS ml_predicted_stockouts,
   ROUND(AVG(ml_stockout_probability) * 100, 1) AS avg_stockout_probability_pct,
   'ML Predicted Stockouts' AS metric_label
 FROM catalog_lcom.gold.ml_supply_chain_predictions ml
 INNER JOIN catalog_lcom.silver.supply_chain_master s
   ON ml.cod_pus = s.cod_pus
 WHERE 1=1
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR s.DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR s.MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR s.TIPOLOGIA_ROLLOS IN ({{p_tipologia}}));
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR s.DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR s.MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR s.TIPOLOGIA_ROLLOS IN (:p_tipologia));
 
 -- Card 2.1.b: High Risk Sites (Probability > 70%)
 SELECT 
@@ -44,36 +44,36 @@ FROM catalog_lcom.gold.ml_supply_chain_predictions ml
 INNER JOIN catalog_lcom.silver.supply_chain_master s
   ON ml.cod_pus = s.cod_pus
 WHERE ml.ml_stockout_probability > 0.70
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR s.DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR s.MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR s.TIPOLOGIA_ROLLOS IN ({{p_tipologia}}));
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR s.DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR s.MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR s.TIPOLOGIA_ROLLOS IN (:p_tipologia));
 
 -- Card 2.1.c: ML Recommended Restocking Quantity
 SELECT 
-  FORMAT_NUMBER(SUM(ml_cantidad_reabastecimiento), 0) AS ml_total_recommended_rolls,
-  FORMAT_NUMBER(AVG(ml_cantidad_reabastecimiento), 0) AS ml_avg_per_site,
+  FORMAT_NUMBER(SUM(cantidad_reabastecimiento_optima), 0) AS ml_total_recommended_rolls,
+  FORMAT_NUMBER(AVG(cantidad_reabastecimiento_optima), 0) AS ml_avg_per_site,
   'ML Recommended Total Rolls' AS metric_label
 FROM catalog_lcom.gold.ml_supply_chain_predictions ml
 INNER JOIN catalog_lcom.silver.supply_chain_master s
   ON ml.cod_pus = s.cod_pus
-WHERE ml.ml_stockout_risk_pred = 1
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR s.DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR s.MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR s.TIPOLOGIA_ROLLOS IN ({{p_tipologia}}));
+WHERE ml.ml_stockout_prediction = 1
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR s.DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR s.MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR s.TIPOLOGIA_ROLLOS IN (:p_tipologia));
 
 -- Card 2.1.d: Average Predicted Days Remaining
 SELECT 
-  ROUND(AVG(ml_predicted_saldo_dias), 1) AS ml_avg_predicted_days,
+  ROUND(AVG(ml_predicted_days_remaining), 1) AS ml_avg_predicted_days,
   ROUND(AVG(s.saldo_dias_ajustado), 1) AS actual_avg_days,
-  ROUND(AVG(ml_predicted_saldo_dias - s.saldo_dias_ajustado), 1) AS avg_prediction_error,
+  ROUND(AVG(ml_predicted_days_remaining - s.saldo_dias_ajustado), 1) AS avg_prediction_error,
   'ML Avg Predicted Days' AS metric_label
 FROM catalog_lcom.gold.ml_supply_chain_predictions ml
 INNER JOIN catalog_lcom.silver.supply_chain_master s
   ON ml.cod_pus = s.cod_pus
 WHERE s.saldo_dias_ajustado BETWEEN 0 AND 365
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR s.DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR s.MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR s.TIPOLOGIA_ROLLOS IN ({{p_tipologia}}));
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR s.DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR s.MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR s.TIPOLOGIA_ROLLOS IN (:p_tipologia));
 
 
 -- ============================================================================
@@ -95,7 +95,7 @@ SELECT
   s.prom_mensual_anterior AS monthly_avg_consumption,
   s.saldo_rollos_ajustado AS current_stock_volume,
   ml.ml_stockout_probability AS risk_probability,
-  ml.ml_predicted_saldo_dias AS ml_predicted_days,
+  ml.ml_predicted_days_remaining AS ml_predicted_days,
   s.riesgo_desabastecimiento AS risk_level,
   CASE 
     WHEN ml.ml_stockout_probability >= 0.8 THEN '#C0392B'  -- Dark Red (Very High Risk)
@@ -117,9 +117,9 @@ INNER JOIN catalog_lcom.gold.ml_supply_chain_predictions ml
   ON s.cod_pus = ml.cod_pus
 WHERE s.saldo_dias_ajustado BETWEEN 0 AND 90  -- Focus on near-term risk
   AND s.prom_mensual_anterior > 0
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR s.DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR s.MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR s.TIPOLOGIA_ROLLOS IN ({{p_tipologia}}))
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR s.DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR s.MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR s.TIPOLOGIA_ROLLOS IN (:p_tipologia))
 ORDER BY ml.ml_stockout_probability DESC
 LIMIT 500;
 
@@ -141,11 +141,11 @@ SELECT
   ROUND(s.saldo_dias_ajustado, 1) AS dias_restantes,
   DATE_ADD(CURRENT_DATE(), CAST(s.saldo_dias_ajustado AS INT)) AS fecha_probable_desabastecimiento,
   ROUND(s.cantidad_reabastecimiento_optima, 0) AS sugerido_reabastecimiento_rollos,
-  ROUND(ml.ml_cantidad_reabastecimiento, 0) AS ml_sugerido_reabastecimiento,
+  ROUND(ml.cantidad_reabastecimiento_optima, 0) AS ml_sugerido_reabastecimiento,
   ROUND(ml.ml_stockout_probability * 100, 1) AS ml_probabilidad_stockout_pct,
   ROUND(s.tasa_consumo_diario, 2) AS tasa_consumo_diario,
   s.riesgo_desabastecimiento AS nivel_riesgo,
-  s.ACCIÓN AS accion_requerida,
+  s.`ACCIÓN` AS accion_requerida,
   -- Priority ranking for sorting
   CASE 
     WHEN s.saldo_dias_ajustado <= 0 THEN 1  -- Immediate
@@ -164,10 +164,10 @@ SELECT
 FROM catalog_lcom.silver.supply_chain_master s
 INNER JOIN catalog_lcom.gold.ml_supply_chain_predictions ml
   ON s.cod_pus = ml.cod_pus
-WHERE (s.requiere_reabastecimiento = 1 OR ml.ml_stockout_risk_pred = 1)
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR s.DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR s.MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR s.TIPOLOGIA_ROLLOS IN ({{p_tipologia}}))
+WHERE (s.requiere_reabastecimiento = 1 OR ml.ml_stockout_prediction = 1)
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR s.DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR s.MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR s.TIPOLOGIA_ROLLOS IN (:p_tipologia))
 ORDER BY priority_rank ASC, s.saldo_dias_ajustado ASC, ml.ml_stockout_probability DESC
 LIMIT 1000;
 
@@ -199,9 +199,9 @@ SELECT
 FROM catalog_lcom.silver.supply_chain_master s
 WHERE s.tasa_consumo_diario > 0 
   AND s.tasa_consumo_diario < 1000  -- Filter extreme outliers
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR s.DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR s.MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR s.TIPOLOGIA_ROLLOS IN ({{p_tipologia}}))
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR s.DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR s.MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR s.TIPOLOGIA_ROLLOS IN (:p_tipologia))
 GROUP BY s.TIPOLOGIA_ROLLOS
 ORDER BY mean_daily_rate DESC;
 
@@ -223,9 +223,9 @@ WITH forecast_comparison AS (
     SUM(s.tasa_consumo_diario * 30) AS ml_forecast,
     COUNT(DISTINCT s.cod_pus) AS site_count
   FROM catalog_lcom.silver.supply_chain_master s
-  WHERE (ARRAY_SIZE({{p_departamento}}) = 0 OR s.DEPARTAMENTO IN ({{p_departamento}}))
-    AND (ARRAY_SIZE({{p_municipio}}) = 0 OR s.MUNICIPIO IN ({{p_municipio}}))
-    AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR s.TIPOLOGIA_ROLLOS IN ({{p_tipologia}}))
+  WHERE (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR s.DEPARTAMENTO IN (:p_departamento))
+    AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR s.MUNICIPIO IN (:p_municipio))
+    AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR s.TIPOLOGIA_ROLLOS IN (:p_tipologia))
   GROUP BY s.TIPOLOGIA_ROLLOS
   
   UNION ALL
@@ -238,9 +238,9 @@ WITH forecast_comparison AS (
     SUM(s.tasa_consumo_diario * 60) AS ml_forecast,
     COUNT(DISTINCT s.cod_pus) AS site_count
   FROM catalog_lcom.silver.supply_chain_master s
-  WHERE (ARRAY_SIZE({{p_departamento}}) = 0 OR s.DEPARTAMENTO IN ({{p_departamento}}))
-    AND (ARRAY_SIZE({{p_municipio}}) = 0 OR s.MUNICIPIO IN ({{p_municipio}}))
-    AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR s.TIPOLOGIA_ROLLOS IN ({{p_tipologia}}))
+  WHERE (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR s.DEPARTAMENTO IN (:p_departamento))
+    AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR s.MUNICIPIO IN (:p_municipio))
+    AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR s.TIPOLOGIA_ROLLOS IN (:p_tipologia))
   GROUP BY s.TIPOLOGIA_ROLLOS
   
   UNION ALL
@@ -253,9 +253,9 @@ WITH forecast_comparison AS (
     SUM(s.tasa_consumo_diario * 90) AS ml_forecast,
     COUNT(DISTINCT s.cod_pus) AS site_count
   FROM catalog_lcom.silver.supply_chain_master s
-  WHERE (ARRAY_SIZE({{p_departamento}}) = 0 OR s.DEPARTAMENTO IN ({{p_departamento}}))
-    AND (ARRAY_SIZE({{p_municipio}}) = 0 OR s.MUNICIPIO IN ({{p_municipio}}))
-    AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR s.TIPOLOGIA_ROLLOS IN ({{p_tipologia}}))
+  WHERE (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR s.DEPARTAMENTO IN (:p_departamento))
+    AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR s.MUNICIPIO IN (:p_municipio))
+    AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR s.TIPOLOGIA_ROLLOS IN (:p_tipologia))
   GROUP BY s.TIPOLOGIA_ROLLOS
 )
 SELECT 
@@ -287,27 +287,27 @@ SELECT
   s.cod_pus,
   CONCAT(s.SEDE_OPERACIONES, ' (', s.MUNICIPIO, ')') AS site_label,
   CURRENT_DATE() AS today,
-  DATE_ADD(CURRENT_DATE(), CAST(ml.ml_predicted_saldo_dias AS INT)) AS predicted_stockout_date,
-  CAST(ml.ml_predicted_saldo_dias AS INT) AS days_until_stockout,
+  DATE_ADD(CURRENT_DATE(), CAST(ml.ml_predicted_days_remaining AS INT)) AS predicted_stockout_date,
+  CAST(ml.ml_predicted_days_remaining AS INT) AS days_until_stockout,
   ROUND(ml.ml_stockout_probability * 100, 1) AS stockout_probability_pct,
   s.TIPOLOGIA_ROLLOS,
   ROUND(s.saldo_rollos_ajustado, 0) AS current_stock,
-  ROUND(ml.ml_cantidad_reabastecimiento, 0) AS recommended_restock,
+  ROUND(ml.cantidad_reabastecimiento_optima, 0) AS recommended_restock,
   CASE 
-    WHEN ml.ml_predicted_saldo_dias <= 7 THEN '#C0392B'   -- Dark Red
-    WHEN ml.ml_predicted_saldo_dias <= 15 THEN '#E74C3C'  -- Red
-    WHEN ml.ml_predicted_saldo_dias <= 30 THEN '#F39C12'  -- Orange
+    WHEN ml.ml_predicted_days_remaining <= 7 THEN '#C0392B'   -- Dark Red
+    WHEN ml.ml_predicted_days_remaining <= 15 THEN '#E74C3C'  -- Red
+    WHEN ml.ml_predicted_days_remaining <= 30 THEN '#F39C12'  -- Orange
     ELSE '#F1C40F'                                        -- Yellow
   END AS timeline_color
 FROM catalog_lcom.silver.supply_chain_master s
 INNER JOIN catalog_lcom.gold.ml_supply_chain_predictions ml
   ON s.cod_pus = ml.cod_pus
-WHERE ml.ml_stockout_risk_pred = 1
-  AND ml.ml_predicted_saldo_dias BETWEEN 0 AND 60
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR s.DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR s.MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR s.TIPOLOGIA_ROLLOS IN ({{p_tipologia}}))
-ORDER BY ml.ml_predicted_saldo_dias ASC, ml.ml_stockout_probability DESC
+WHERE ml.ml_stockout_prediction = 1
+  AND ml.ml_predicted_days_remaining BETWEEN 0 AND 60
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR s.DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR s.MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR s.TIPOLOGIA_ROLLOS IN (:p_tipologia))
+ORDER BY ml.ml_predicted_days_remaining ASC, ml.ml_stockout_probability DESC
 LIMIT 50;
 
 
@@ -321,38 +321,38 @@ LIMIT 50;
 SELECT 
   'Sites Requiring Restocking' AS metric,
   SUM(s.requiere_reabastecimiento) AS rule_based_count,
-  SUM(ml.ml_stockout_risk_pred) AS ml_predicted_count,
-  SUM(ml.ml_stockout_risk_pred) - SUM(s.requiere_reabastecimiento) AS difference,
+  SUM(ml.ml_stockout_prediction) AS ml_predicted_count,
+  SUM(ml.ml_stockout_prediction) - SUM(s.requiere_reabastecimiento) AS difference,
   ROUND(
-    ((SUM(ml.ml_stockout_risk_pred) - SUM(s.requiere_reabastecimiento))::FLOAT / 
+    ((SUM(ml.ml_stockout_prediction) - SUM(s.requiere_reabastecimiento))::FLOAT / 
      NULLIF(SUM(s.requiere_reabastecimiento), 0)::FLOAT) * 100,
     1
   ) AS pct_difference
 FROM catalog_lcom.silver.supply_chain_master s
 INNER JOIN catalog_lcom.gold.ml_supply_chain_predictions ml
   ON s.cod_pus = ml.cod_pus
-WHERE (ARRAY_SIZE({{p_departamento}}) = 0 OR s.DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR s.MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR s.TIPOLOGIA_ROLLOS IN ({{p_tipologia}}))
+WHERE (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR s.DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR s.MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR s.TIPOLOGIA_ROLLOS IN (:p_tipologia))
 
 UNION ALL
 
 SELECT 
   'Total Rolls Recommended' AS metric,
   CAST(SUM(s.cantidad_reabastecimiento_optima) AS BIGINT) AS rule_based_count,
-  CAST(SUM(ml.ml_cantidad_reabastecimiento) AS BIGINT) AS ml_predicted_count,
-  CAST(SUM(ml.ml_cantidad_reabastecimiento) - SUM(s.cantidad_reabastecimiento_optima) AS BIGINT) AS difference,
+  CAST(SUM(ml.cantidad_reabastecimiento_optima) AS BIGINT) AS ml_predicted_count,
+  CAST(SUM(ml.cantidad_reabastecimiento_optima) - SUM(s.cantidad_reabastecimiento_optima) AS BIGINT) AS difference,
   ROUND(
-    ((SUM(ml.ml_cantidad_reabastecimiento) - SUM(s.cantidad_reabastecimiento_optima))::FLOAT / 
+    ((SUM(ml.cantidad_reabastecimiento_optima) - SUM(s.cantidad_reabastecimiento_optima))::FLOAT / 
      NULLIF(SUM(s.cantidad_reabastecimiento_optima), 0)::FLOAT) * 100,
     1
   ) AS pct_difference
 FROM catalog_lcom.silver.supply_chain_master s
 INNER JOIN catalog_lcom.gold.ml_supply_chain_predictions ml
   ON s.cod_pus = ml.cod_pus
-WHERE (ARRAY_SIZE({{p_departamento}}) = 0 OR s.DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR s.MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR s.TIPOLOGIA_ROLLOS IN ({{p_tipologia}}));
+WHERE (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR s.DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR s.MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR s.TIPOLOGIA_ROLLOS IN (:p_tipologia));
 
 
 -- ============================================================================

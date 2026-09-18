@@ -27,9 +27,9 @@ SELECT
   'Active Operational Sites' AS metric_label
 FROM catalog_lcom.silver.supply_chain_master
 WHERE 1=1
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR TIPOLOGIA_ROLLOS IN ({{p_tipologia}}));
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR TIPOLOGIA_ROLLOS IN (:p_tipologia));
 
 
 -- ============================================================================
@@ -50,9 +50,9 @@ SELECT
   'Critical Stockout Rate' AS metric_label
 FROM catalog_lcom.silver.supply_chain_master
 WHERE 1=1
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR TIPOLOGIA_ROLLOS IN ({{p_tipologia}}));
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR TIPOLOGIA_ROLLOS IN (:p_tipologia));
 
 
 -- ============================================================================
@@ -63,23 +63,23 @@ WHERE 1=1
 -- Color: Dynamic based on consumption efficiency
 
 SELECT 
-  FORMAT_NUMBER(SUM(ROLLOS_CONSUMIDOS_DESDE_MIGRACIÓN_O_APERTURA), 0) AS total_consumed,
-  FORMAT_NUMBER(SUM(ROLLOS_ENTREGADOS_DESDE_MIGRACIÓN_O_APERTURA), 0) AS total_delivered,
+  FORMAT_NUMBER(SUM(`ROLLOS_CONSUMIDOS_DESDE_MIGRACIÓN_O_APERTURA`), 0) AS total_consumed,
+  FORMAT_NUMBER(SUM(`ROLLOS_ENTREGADOS_DESDE_MIGRACIÓN_O_APERTURA`), 0) AS total_delivered,
   ROUND(
-    (SUM(ROLLOS_CONSUMIDOS_DESDE_MIGRACIÓN_O_APERTURA)::FLOAT / 
-     NULLIF(SUM(ROLLOS_ENTREGADOS_DESDE_MIGRACIÓN_O_APERTURA), 0)::FLOAT) * 100,
+    (SUM(`ROLLOS_CONSUMIDOS_DESDE_MIGRACIÓN_O_APERTURA`)::FLOAT / 
+     NULLIF(SUM(`ROLLOS_ENTREGADOS_DESDE_MIGRACIÓN_O_APERTURA`), 0)::FLOAT) * 100,
     1
   ) AS consumption_efficiency_pct,
   FORMAT_NUMBER(
-    SUM(ROLLOS_ENTREGADOS_DESDE_MIGRACIÓN_O_APERTURA) - 
-    SUM(ROLLOS_CONSUMIDOS_DESDE_MIGRACIÓN_O_APERTURA), 
+    SUM(`ROLLOS_ENTREGADOS_DESDE_MIGRACIÓN_O_APERTURA`) - 
+    SUM(`ROLLOS_CONSUMIDOS_DESDE_MIGRACIÓN_O_APERTURA`), 
     0
   ) AS net_inventory_change
 FROM catalog_lcom.silver.supply_chain_master
 WHERE 1=1
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR TIPOLOGIA_ROLLOS IN ({{p_tipologia}}));
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR TIPOLOGIA_ROLLOS IN (:p_tipologia));
 
 
 -- ============================================================================
@@ -97,9 +97,9 @@ SELECT
   'National Average Stock Days' AS metric_label
 FROM catalog_lcom.silver.supply_chain_master
 WHERE saldo_dias_ajustado BETWEEN 0 AND 365  -- Filter outliers
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR TIPOLOGIA_ROLLOS IN ({{p_tipologia}}));
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR TIPOLOGIA_ROLLOS IN (:p_tipologia));
 
 
 -- ============================================================================
@@ -111,7 +111,7 @@ WHERE saldo_dias_ajustado BETWEEN 0 AND 365  -- Filter outliers
 
 SELECT 
   SUM(CASE WHEN requiere_reabastecimiento = 1 THEN 1 ELSE 0 END) AS sites_need_restocking,
-  SUM(CASE WHEN ACCIÓN = 'REABASTECER' THEN 1 ELSE 0 END) AS sites_action_restock,
+  SUM(CASE WHEN `ACCIÓN` = 'REABASTECER' THEN 1 ELSE 0 END) AS sites_action_restock,
   SUM(CASE WHEN saldo_dias_ajustado <= 7 THEN 1 ELSE 0 END) AS sites_critical_7days,
   ROUND(
     (SUM(CASE WHEN requiere_reabastecimiento = 1 THEN 1 ELSE 0 END)::FLOAT / 
@@ -121,9 +121,9 @@ SELECT
   'Critical Action Required' AS metric_label
 FROM catalog_lcom.silver.supply_chain_master
 WHERE 1=1
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR TIPOLOGIA_ROLLOS IN ({{p_tipologia}}));
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR TIPOLOGIA_ROLLOS IN (:p_tipologia));
 
 
 -- ============================================================================
@@ -160,9 +160,9 @@ SELECT
   END AS color_code
 FROM catalog_lcom.silver.supply_chain_master
 WHERE 1=1
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR TIPOLOGIA_ROLLOS IN ({{p_tipologia}}))
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR TIPOLOGIA_ROLLOS IN (:p_tipologia))
 GROUP BY DEPARTAMENTO, MUNICIPIO
 ORDER BY pct_critical DESC, avg_days_remaining ASC
 LIMIT 100;
@@ -178,17 +178,17 @@ LIMIT 100;
 
 WITH monthly_metrics AS (
   SELECT 
-    DATE_TRUNC('month', FECHA_MIGRACIÓN_O_APERTURA) AS month_date,
-    SUM(ROLLOS_ENTREGADOS_DESDE_MIGRACIÓN_O_APERTURA) AS delivered,
-    SUM(ROLLOS_CONSUMIDOS_DESDE_MIGRACIÓN_O_APERTURA) AS consumed,
+    DATE_TRUNC('month', TRY_TO_DATE(SUBSTR(`FECHA_MIGRACIÓN_O_APERTURA`, 1, 10))) AS month_date,
+    SUM(`ROLLOS_ENTREGADOS_DESDE_MIGRACIÓN_O_APERTURA`) AS delivered,
+    SUM(`ROLLOS_CONSUMIDOS_DESDE_MIGRACIÓN_O_APERTURA`) AS consumed,
     COUNT(DISTINCT cod_pus) AS sites_active
   FROM catalog_lcom.silver.supply_chain_master
-  WHERE FECHA_MIGRACIÓN_O_APERTURA IS NOT NULL
-    AND FECHA_MIGRACIÓN_O_APERTURA >= DATE_SUB(CURRENT_DATE(), 365)
-    AND (ARRAY_SIZE({{p_departamento}}) = 0 OR DEPARTAMENTO IN ({{p_departamento}}))
-    AND (ARRAY_SIZE({{p_municipio}}) = 0 OR MUNICIPIO IN ({{p_municipio}}))
-    AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR TIPOLOGIA_ROLLOS IN ({{p_tipologia}}))
-  GROUP BY DATE_TRUNC('month', FECHA_MIGRACIÓN_O_APERTURA)
+  WHERE TRY_TO_DATE(SUBSTR(`FECHA_MIGRACIÓN_O_APERTURA`, 1, 10)) IS NOT NULL
+    AND TRY_TO_DATE(SUBSTR(`FECHA_MIGRACIÓN_O_APERTURA`, 1, 10)) >= DATE_SUB(CURRENT_DATE(), 365)
+    AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR DEPARTAMENTO IN (:p_departamento))
+    AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR MUNICIPIO IN (:p_municipio))
+    AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR TIPOLOGIA_ROLLOS IN (:p_tipologia))
+  GROUP BY DATE_TRUNC('month', TRY_TO_DATE(SUBSTR(`FECHA_MIGRACIÓN_O_APERTURA`, 1, 10)))
 )
 SELECT 
   DATE_FORMAT(month_date, 'MMM yyyy') AS month_label,
@@ -227,9 +227,9 @@ SELECT
   END AS bar_color
 FROM catalog_lcom.silver.supply_chain_master
 WHERE saldo_dias_ajustado >= 0  -- Exclude extreme negatives
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR TIPOLOGIA_ROLLOS IN ({{p_tipologia}}))
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR TIPOLOGIA_ROLLOS IN (:p_tipologia))
 ORDER BY saldo_dias_ajustado ASC
 LIMIT 10;
 
@@ -265,9 +265,9 @@ SELECT
   END AS sort_order
 FROM catalog_lcom.silver.supply_chain_master
 WHERE 1=1
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR DEPARTAMENTO IN ({{p_departamento}}))
-  AND (ARRAY_SIZE({{p_municipio}}) = 0 OR MUNICIPIO IN ({{p_municipio}}))
-  AND (ARRAY_SIZE({{p_tipologia}}) = 0 OR TIPOLOGIA_ROLLOS IN ({{p_tipologia}}))
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR DEPARTAMENTO IN (:p_departamento))
+  AND (COALESCE(ARRAY_SIZE(:p_municipio), 0) = 0 OR MUNICIPIO IN (:p_municipio))
+  AND (COALESCE(ARRAY_SIZE(:p_tipologia), 0) = 0 OR TIPOLOGIA_ROLLOS IN (:p_tipologia))
 GROUP BY riesgo_desabastecimiento
 ORDER BY sort_order;
 
@@ -286,7 +286,7 @@ ORDER BY DEPARTAMENTO;
 SELECT DISTINCT MUNICIPIO AS value, MUNICIPIO AS label
 FROM catalog_lcom.silver.supply_chain_master
 WHERE MUNICIPIO IS NOT NULL
-  AND (ARRAY_SIZE({{p_departamento}}) = 0 OR DEPARTAMENTO IN ({{p_departamento}}))
+  AND (COALESCE(ARRAY_SIZE(:p_departamento), 0) = 0 OR DEPARTAMENTO IN (:p_departamento))
 ORDER BY MUNICIPIO;
 
 -- Parameter Source: p_tipologia

@@ -69,7 +69,7 @@ FROM catalog_lcom.silver.supply_chain_master
 WHERE (
   saldo_dias_ajustado <= 0 
   OR T = 'DESABASTECIDO'
-  OR (ACCIÓN = 'REABASTECER' AND saldo_dias_ajustado <= 1)
+  OR (`ACCIÓN` = 'REABASTECER' AND saldo_dias_ajustado <= 1)
 )
 HAVING COUNT(DISTINCT cod_pus) > 0;
 
@@ -134,7 +134,7 @@ SELECT
   ) AS alert_message_body
 FROM catalog_lcom.silver.supply_chain_master
 WHERE (
-  (ACCIÓN = 'REABASTECER' AND saldo_dias_ajustado BETWEEN 1 AND 7)
+  (`ACCIÓN` = 'REABASTECER' AND saldo_dias_ajustado BETWEEN 1 AND 7)
   OR (requiere_reabastecimiento = 1 AND saldo_dias_ajustado BETWEEN 1 AND 7)
 )
 HAVING COUNT(DISTINCT cod_pus) > 50;  -- Threshold: Alert when >50 sites need restocking
@@ -206,19 +206,19 @@ FROM (
     UPPER(TRIM(ESTADO)) AS ESTADO,
     CAST(ROLLOS_ENTREGADOS AS INT) AS ROLLOS_ENTREGADOS,
     COALESCE(UPPER(TRIM(`TIPOLOGIA_ROLLOS`)), 'N/A') AS `TIPOLOGIA_ROLLOS`,
-    TO_TIMESTAMP(`FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)`, 'dd/MM/yyyy HH:mm') AS resolution_date,
+    `FECHA_DE_SOLUCIÓN_DD_MM_AAAA` AS resolution_date,
     -- Calculate hours since expected resolution (assuming 48-hour SLA)
     DATEDIFF(
       HOUR,
-      DATE_ADD(TO_TIMESTAMP(`FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)`, 'dd/MM/yyyy HH:mm'), -2),  -- Order creation (2 days before)
+      DATE_ADD(`FECHA_DE_SOLUCIÓN_DD_MM_AAAA`, -2),  -- Order creation (2 days before)
       CURRENT_TIMESTAMP()
     ) - 48 AS hours_since_expected  -- SLA is 48 hours
   FROM catalog_lcom.bronze.oc_agosto_raw
-  WHERE `FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)` IS NOT NULL
+  WHERE `FECHA_DE_SOLUCIÓN_DD_MM_AAAA` IS NOT NULL
     AND UPPER(TRIM(ESTADO)) != 'EJECUTADO_EXITOSO'  -- Not yet successfully executed
     AND DATEDIFF(
           HOUR,
-          DATE_ADD(TO_TIMESTAMP(`FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)`, 'dd/MM/yyyy HH:mm'), -2),
+          DATE_ADD(`FECHA_DE_SOLUCIÓN_DD_MM_AAAA`, -2),
           CURRENT_TIMESTAMP()
         ) > 48  -- Exceeded 48-hour SLA
 ) delayed_orders
@@ -254,7 +254,7 @@ HAVING COUNT(*) > 0;
 SELECT 
   COUNT(DISTINCT ml.cod_pus) AS high_risk_sites,
   ROUND(AVG(ml.ml_stockout_probability) * 100, 1) AS avg_risk_probability_pct,
-  SUM(ml.ml_cantidad_reabastecimiento) AS total_recommended_rolls,
+  SUM(ml.cantidad_reabastecimiento_optima) AS total_recommended_rolls,
   CURRENT_TIMESTAMP() AS alert_timestamp,
   'ML HIGH-RISK STOCKOUT PREDICTIONS' AS alert_title,
   CONCAT(
@@ -264,7 +264,7 @@ SELECT
     'SUMMARY:\n',
     '• High-Risk Sites: ', CAST(COUNT(DISTINCT ml.cod_pus) AS STRING), '\n',
     '• Avg Risk Probability: ', CAST(ROUND(AVG(ml.ml_stockout_probability) * 100, 1) AS STRING), '%\n',
-    '• ML Recommended Rolls: ', FORMAT_NUMBER(CAST(SUM(ml.ml_cantidad_reabastecimiento) AS BIGINT), 0), '\n',
+    '• ML Recommended Rolls: ', FORMAT_NUMBER(CAST(SUM(ml.cantidad_reabastecimiento_optima) AS BIGINT), 0), '\n',
     '• Forecast Horizon: 30-60 days\n\n',
     'TOP 10 HIGHEST RISK SITES:\n',
     STRING_AGG(
@@ -272,11 +272,11 @@ SELECT
         '• ', s.cod_pus, 
         ' - ', s.MUNICIPIO, ', ', s.DEPARTAMENTO,
         ' | Risk: ', CAST(ROUND(ml.ml_stockout_probability * 100, 1) AS STRING), '%',
-        ' | Predicted Days: ', CAST(ROUND(ml.ml_predicted_saldo_dias, 1) AS STRING),
-        ' | Recommended: ', CAST(ROUND(ml.ml_cantidad_reabastecimiento, 0) AS STRING), ' rolls'
+        ' | Predicted Days: ', CAST(ROUND(ml.ml_predicted_days_remaining, 1) AS STRING),
+        ' | Recommended: ', CAST(ROUND(ml.cantidad_reabastecimiento_optima, 0) AS STRING), ' rolls'
       ),
       '\n'
-    ) WITHIN GROUP (ORDER BY ml.ml_stockout_probability DESC LIMIT 10),
+    ),
     '\n\n',
     'ACTION RECOMMENDED: Review ML predictions and plan preemptive restocking.\n',
     'Dashboard: [View ML Forecasts](#ml-forecasting-dashboard)'
@@ -320,7 +320,7 @@ SELECT
   COUNT(DISTINCT cod_pus) AS current_value,
   CASE WHEN COUNT(DISTINCT cod_pus) > 50 THEN 'WOULD TRIGGER' ELSE 'OK' END AS status
 FROM catalog_lcom.silver.supply_chain_master
-WHERE (ACCIÓN = 'REABASTECER' AND saldo_dias_ajustado BETWEEN 1 AND 7)
+WHERE (`ACCIÓN` = 'REABASTECER' AND saldo_dias_ajustado BETWEEN 1 AND 7)
 
 UNION ALL
 
@@ -332,7 +332,7 @@ FROM catalog_lcom.bronze.oc_agosto_raw
 WHERE UPPER(TRIM(ESTADO)) != 'EJECUTADO_EXITOSO'
   AND DATEDIFF(
         HOUR,
-        DATE_ADD(TO_TIMESTAMP(`FECHA_DE_SOLUCIÓN_(DD_MM_AAAA)`, 'dd/MM/yyyy HH:mm'), -2),
+        DATE_ADD(`FECHA_DE_SOLUCIÓN_DD_MM_AAAA`, -2),
         CURRENT_TIMESTAMP()
       ) > 48;
 
