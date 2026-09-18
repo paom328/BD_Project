@@ -700,7 +700,7 @@ if data_quality_task.result == "FAILED":
 
 ## 🔄 KNIME Workflow Integration
 
-![Image 2026-09-18 at 6.53.22 AM_1789744139759.jpeg](./Image 2026-09-18 at 6.53.22 AM_1789744139759.jpeg "Image 2026-09-18 at 6.53.22 AM_1789744139759.jpeg")
+![knimescreenshot_1789744648446.jpg](./knimescreenshot_1789744648446.jpg "knimescreenshot_1789744648446.jpg")
 
 ### Background
 
