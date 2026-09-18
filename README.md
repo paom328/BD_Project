@@ -162,7 +162,7 @@ catalog_lcom
     ├── stockout_risk_classifier
     └── demand_forecasting_model
 ```
-
+![0f621943-bfdb-4ee2-bf5a-2eed3338d4af_1789743191201.jpg](./0f621943-bfdb-4ee2-bf5a-2eed3338d4af_1789743191201.jpg "0f621943-bfdb-4ee2-bf5a-2eed3338d4af_1789743191201.jpg")
 ---
 
 ## 📊 Data Sources
@@ -446,11 +446,14 @@ BD_Project/
 │
 └── knime/                             # KNIME workflow reference (optional)
     └── supply_chain_etl.knwf          # Original KNIME workflow (if available)
-```
 
+```
+![70f0cfcb-f624-456e-8646-bcc0fda42e36_1789744007103.jpg](./70f0cfcb-f624-456e-8646-bcc0fda42e36_1789744007103.jpg "70f0cfcb-f624-456e-8646-bcc0fda42e36_1789744007103.jpg")
 ---
 
 ## ⚙️ Installation & Setup
+
+![5b6490ab-0fa4-45f8-ab0a-65224fb228a3_1789743624554.jpg](./5b6490ab-0fa4-45f8-ab0a-65224fb228a3_1789743624554.jpg "5b6490ab-0fa4-45f8-ab0a-65224fb228a3_1789743624554.jpg")
 
 ### Prerequisites
 
@@ -505,6 +508,7 @@ data_path = "/Workspace/Users/pao.m.328@gmail.com/BD_Project/data"
 ```
 
 Update `data_path` and user email as needed.
+
 
 ---
 
@@ -568,6 +572,8 @@ Alerts: Email on failure
 ### Executive KPI Cards
 
 **Query**: `sql/01_executive_kpi_cards.sql`
+
+![image_1789742969654.png](./image_1789742969654.png "image_1789742969654.png")
 
 Displays 8 high-level metrics:
 - Total Sites
@@ -694,6 +700,8 @@ if data_quality_task.result == "FAILED":
 
 ## 🔄 KNIME Workflow Integration
 
+![Image 2026-09-18 at 6.53.22 AM_1789744139759.jpeg](./Image 2026-09-18 at 6.53.22 AM_1789744139759.jpeg "Image 2026-09-18 at 6.53.22 AM_1789744139759.jpeg")
+
 ### Background
 
 The original ETL logic was developed in **KNIME Analytics Platform**. This Databricks implementation **replicates and extends** that workflow with:
@@ -767,6 +775,8 @@ assert knime_output.agg(sum("SALDO_ROLLOS")).collect()[0][0] == \
 ---
 
 ## 🚀 Future Enhancements
+
+![0382f27d-aca6-4729-a2aa-734ec2e85291_1789744256640.jpg](./0382f27d-aca6-4729-a2aa-734ec2e85291_1789744256640.jpg "0382f27d-aca6-4729-a2aa-734ec2e85291_1789744256640.jpg")
 
 ### Phase 2 Roadmap
 

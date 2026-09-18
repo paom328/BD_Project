@@ -102,7 +102,10 @@
             "spec": {
               "frame": {
                 "showTitle": true,
-                "title": "Stockout Sites"
+                "title": {
+                  "value": "Stockout Sites",
+                  "fields": []
+                }
               },
               "version": 2,
               "widgetType": "counter",
@@ -145,7 +148,10 @@
             "spec": {
               "frame": {
                 "showTitle": true,
-                "title": "Total Rolls Consumed"
+                "title": {
+                  "value": "Total Rolls Consumed",
+                  "fields": []
+                }
               },
               "version": 2,
               "widgetType": "counter",
@@ -188,7 +194,10 @@
             "spec": {
               "frame": {
                 "showTitle": true,
-                "title": "Avg Stock Days"
+                "title": {
+                  "value": "Avg Stock Days",
+                  "fields": []
+                }
               },
               "version": 2,
               "widgetType": "counter",
@@ -205,9 +214,9 @@
           },
           "position": {
             "x": 9,
-            "y": 0,
+            "y": 2,
             "width": 3,
-            "height": 2
+            "height": 5
           }
         },
         {
@@ -247,9 +256,9 @@
             }
           },
           "position": {
-            "x": 0,
-            "y": 2,
-            "width": 4,
+            "x": 9,
+            "y": 0,
+            "width": 3,
             "height": 2
           }
         },
@@ -278,7 +287,10 @@
             "spec": {
               "frame": {
                 "showTitle": true,
-                "title": "Risk Distribution"
+                "title": {
+                  "value": "Risk Distribution",
+                  "fields": []
+                }
               },
               "version": 3,
               "widgetType": "pie",
@@ -304,10 +316,10 @@
             }
           },
           "position": {
-            "x": 4,
+            "x": 5,
             "y": 2,
-            "width": 8,
-            "height": 2
+            "width": 4,
+            "height": 5
           }
         },
         {
@@ -351,7 +363,10 @@
             "spec": {
               "frame": {
                 "showTitle": true,
-                "title": "Geographic Risk by Department & Municipality"
+                "title": {
+                  "value": "Geographic Risk by Department &amp; Municipality",
+                  "fields": []
+                }
               },
               "version": 2,
               "widgetType": "table",
@@ -383,10 +398,10 @@
             }
           },
           "position": {
-            "x": 0,
-            "y": 4,
+            "x": 5,
+            "y": 7,
             "width": 7,
-            "height": 4
+            "height": 6
           }
         },
         {
@@ -418,7 +433,10 @@
             "spec": {
               "frame": {
                 "showTitle": true,
-                "title": "Avg Stock Days by Site"
+                "title": {
+                  "value": "Avg Stock Days by Site",
+                  "fields": []
+                }
               },
               "version": 3,
               "widgetType": "bar",
@@ -451,10 +469,10 @@
             }
           },
           "position": {
-            "x": 7,
-            "y": 4,
+            "x": 0,
+            "y": 7,
             "width": 5,
-            "height": 4
+            "height": 6
           }
         },
         {
@@ -482,7 +500,10 @@
             "spec": {
               "frame": {
                 "showTitle": true,
-                "title": "Monthly Roll Consumption Trend"
+                "title": {
+                  "value": "Monthly Roll Consumption Trend",
+                  "fields": []
+                }
               },
               "version": 3,
               "widgetType": "line",
@@ -509,9 +530,9 @@
           },
           "position": {
             "x": 0,
-            "y": 8,
-            "width": 12,
-            "height": 3
+            "y": 2,
+            "width": 5,
+            "height": 5
           }
         }
       ],
