@@ -797,10 +797,10 @@ assert knime_output.agg(sum("SALDO_ROLLOS")).collect()[0][0] == \
 
 ### Contributions
 
-This project is maintained by the Enterprise Data Engineering team. For questions or contributions:
+This project is maintained by the Data Engineering team. For questions or contributions:
 
-- **Technical Lead**: Principal Big Data Engineer
-- **ML Lead**: Lead ML Engineer
+- **Author**: Juliana Gil, Paola Mendoza
+- **Company**: LCOM
 - **Contact**: `pao.m.328@gmail.com`
 
 ---

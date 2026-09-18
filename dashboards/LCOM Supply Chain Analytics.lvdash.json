@@ -1,0 +1,528 @@
+{
+  "datasets": [
+    {
+      "name": "supply_chain_metrics",
+      "displayName": "Supply Chain Metrics (Silver)",
+      "queryLines": [
+        "SELECT\n",
+        "  cod_pus,\n",
+        "  DEPARTAMENTO,\n",
+        "  MUNICIPIO,\n",
+        "  TIPOLOGIA_ROLLOS,\n",
+        "  T AS status,\n",
+        "  SEDE_OPERACIONES,\n",
+        "  riesgo_desabastecimiento,\n",
+        "  `ACCIÓN` AS accion,\n",
+        "  saldo_dias_ajustado,\n",
+        "  saldo_rollos_ajustado,\n",
+        "  tasa_consumo_diario,\n",
+        "  requiere_reabastecimiento,\n",
+        "  `ROLLOS_CONSUMIDOS_DESDE_MIGRACIÓN_O_APERTURA` AS rollos_consumidos,\n",
+        "  `ROLLOS_ENTREGADOS_DESDE_MIGRACIÓN_O_APERTURA` AS rollos_entregados,\n",
+        "  TRY_TO_DATE(SUBSTR(`FECHA_MIGRACIÓN_O_APERTURA`, 1, 10)) AS migration_date,\n",
+        "  CASE\n",
+        "    WHEN T = 'DESABASTECIDO' THEN 1\n",
+        "    ELSE 0\n",
+        "  END AS is_stockout,\n",
+        "  CASE\n",
+        "    WHEN `ACCIÓN` = 'REABASTECER' THEN 1\n",
+        "    ELSE 0\n",
+        "  END AS is_reabastecer\n",
+        "FROM\n",
+        "  catalog_lcom.silver.supply_chain_master"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "4e15503f",
+      "displayName": "Executive Overview",
+      "layout": [
+        {
+          "widget": {
+            "name": "kpi_total_sites",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "supply_chain_metrics",
+                  "fields": [
+                    {
+                      "name": "countdistinct(cod_pus)",
+                      "expression": "COUNT(DISTINCT `cod_pus`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Total Active Sites"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "countdistinct(cod_pus)",
+                  "rowNumber": 0
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_stockout_sites",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "supply_chain_metrics",
+                  "fields": [
+                    {
+                      "name": "sum(is_stockout)",
+                      "expression": "SUM(`is_stockout`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Stockout Sites"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(is_stockout)",
+                  "rowNumber": 0
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_total_consumed",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "supply_chain_metrics",
+                  "fields": [
+                    {
+                      "name": "sum(rollos_consumidos)",
+                      "expression": "SUM(`rollos_consumidos`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Total Rolls Consumed"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(rollos_consumidos)",
+                  "rowNumber": 0
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_avg_stock_days",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "supply_chain_metrics",
+                  "fields": [
+                    {
+                      "name": "avg(saldo_dias_ajustado)",
+                      "expression": "AVG(`saldo_dias_ajustado`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Avg Stock Days"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(saldo_dias_ajustado)",
+                  "rowNumber": 0
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_action_required",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "supply_chain_metrics",
+                  "fields": [
+                    {
+                      "name": "sum(is_reabastecer)",
+                      "expression": "SUM(`is_reabastecer`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Sites Needing Restock"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(is_reabastecer)",
+                  "rowNumber": 0
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "risk_distribution_pie",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "supply_chain_metrics",
+                  "fields": [
+                    {
+                      "name": "countdistinct(cod_pus)",
+                      "expression": "COUNT(DISTINCT `cod_pus`)"
+                    },
+                    {
+                      "name": "riesgo_desabastecimiento",
+                      "expression": "`riesgo_desabastecimiento`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Risk Distribution"
+              },
+              "version": 3,
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "countdistinct(cod_pus)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "cod_pus"
+                },
+                "color": {
+                  "fieldName": "riesgo_desabastecimiento",
+                  "displayName": "riesgo_desabastecimiento",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 2,
+            "width": 8,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "geographic_risk_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "supply_chain_metrics",
+                  "fields": [
+                    {
+                      "name": "DEPARTAMENTO",
+                      "expression": "`DEPARTAMENTO`"
+                    },
+                    {
+                      "name": "MUNICIPIO",
+                      "expression": "`MUNICIPIO`"
+                    },
+                    {
+                      "name": "countdistinct(cod_pus)",
+                      "expression": "COUNT(DISTINCT `cod_pus`)"
+                    },
+                    {
+                      "name": "avg(saldo_dias_ajustado)",
+                      "expression": "AVG(`saldo_dias_ajustado`)"
+                    },
+                    {
+                      "name": "sum(saldo_rollos_ajustado)",
+                      "expression": "SUM(`saldo_rollos_ajustado`)"
+                    },
+                    {
+                      "name": "avg(tasa_consumo_diario)",
+                      "expression": "AVG(`tasa_consumo_diario`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Geographic Risk by Department & Municipality"
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "DEPARTAMENTO"
+                  },
+                  {
+                    "fieldName": "MUNICIPIO"
+                  },
+                  {
+                    "fieldName": "countdistinct(cod_pus)"
+                  },
+                  {
+                    "fieldName": "avg(saldo_dias_ajustado)"
+                  },
+                  {
+                    "fieldName": "sum(saldo_rollos_ajustado)"
+                  },
+                  {
+                    "fieldName": "avg(tasa_consumo_diario)"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 7,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "critical_sites_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "supply_chain_metrics",
+                  "fields": [
+                    {
+                      "name": "TIPOLOGIA_ROLLOS",
+                      "expression": "`TIPOLOGIA_ROLLOS`"
+                    },
+                    {
+                      "name": "SEDE_OPERACIONES",
+                      "expression": "`SEDE_OPERACIONES`"
+                    },
+                    {
+                      "name": "avg(saldo_dias_ajustado)",
+                      "expression": "AVG(`saldo_dias_ajustado`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Avg Stock Days by Site"
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "SEDE_OPERACIONES",
+                  "displayName": "SEDE_OPERACIONES",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "avg(saldo_dias_ajustado)",
+                  "displayName": "saldo_dias_ajustado",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "TIPOLOGIA_ROLLOS",
+                  "displayName": "TIPOLOGIA_ROLLOS",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 7,
+            "y": 4,
+            "width": 5,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "supply_burn_trend",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "supply_chain_metrics",
+                  "fields": [
+                    {
+                      "name": "monthly(migration_date)",
+                      "expression": "DATE_TRUNC(\"MONTH\", `migration_date`)"
+                    },
+                    {
+                      "name": "sum(rollos_consumidos)",
+                      "expression": "SUM(`rollos_consumidos`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Monthly Roll Consumption Trend"
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "monthly(migration_date)",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(rollos_consumidos)",
+                  "displayName": "rollos_consumidos",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 8,
+            "width": 12,
+            "height": 3
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
